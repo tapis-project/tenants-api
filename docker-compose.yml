@@ -1,0 +1,38 @@
+---
+
+version: "3.5"
+
+networks:
+    tenants:
+        driver: bridge
+
+volumes:
+    pgdata:
+
+services:
+    postgres:
+        image: postgres:9.4
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+        networks:
+            - tenants
+
+    migrations:
+        image: tapis/tenants-api-migrations
+        volumes:
+            - ./config-local.json:/home/tapis/config.json
+        networks:
+            - tenants
+
+    tenants:
+        image: tapis/tenants-api
+        ports:
+            - "5000:5000"
+        volumes:
+            - ./config-local.json:/home/tapis/config.json
+            - ./service.log:/home/tapis/service.log
+        networks:
+            - tenants
+        depends_on:
+            - postgres
+

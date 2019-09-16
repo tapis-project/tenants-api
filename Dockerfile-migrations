@@ -1,0 +1,6 @@
+# image: tapis/tenants-api
+from tapis/tenants-api
+
+COPY migrations /home/tapis/migrations
+
+ENTRYPOINT ["flask", "db"]

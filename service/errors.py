@@ -1,0 +1,1 @@
+# all custom errors specific to the tenants API.

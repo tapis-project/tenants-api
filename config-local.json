@@ -1,0 +1,6 @@
+{
+
+  "service_name": "tenants",
+  "tenants": ["*"],
+  "use_sk": false
+}
