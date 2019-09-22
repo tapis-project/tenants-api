@@ -15,7 +15,7 @@ cwd=$(shell pwd)
 # ----- build images
 
 build.api:
-	cd $(cwd); docker build -t tapis/$(api)-api .;
+	cd $(cwd); touch service.log; docker build -t tapis/$(api)-api .;
 
 build.migrations:
 	cd $(cwd); docker build -f Dockerfile-migrations -t tapis/$(api)-api-migrations .

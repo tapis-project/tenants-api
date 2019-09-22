@@ -55,6 +55,8 @@ class LDAPConnection(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     ldap_id = db.Column(db.String(50), unique=True, nullable=False)
     url = db.Column(db.String(2000), unique=False, nullable=False)
+    port = db.Column(db.Integer, unique=False, nullable=False)
+    use_ssl = db.Column(db.Boolean, unique=False, nullable=False)
     user_dn = db.Column(db.String(200), unique=False, nullable=False)
     bind_dn = db.Column(db.String(200), unique=False, nullable=False)
     bind_credential = db.Column(db.String(200), unique=False, nullable=False)
@@ -65,8 +67,10 @@ class LDAPConnection(db.Model):
         return {
             'ldap_id': self.ldap_id,
             'url': self.url,
+            'port': self.port,
             'user_dn': self.user_dn,
             'bind_dn': self.bind_dn,
+            'use_ssl': self.use_ssl,
             'bind_credential': self.bind_credential,
             'account_type': self.account_type.serialize,
         }

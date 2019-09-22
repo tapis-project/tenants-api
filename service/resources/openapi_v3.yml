@@ -381,6 +381,12 @@ components:
         url:
           type: string
           description: url to the LDAP
+        port:
+          type: integer
+          description: port for the LDAP
+        use_ssl:
+          type: boolean
+          description: Whether to use SSL with the LDAP
         user_dn:
           type: string
           description: base DN for users
@@ -394,7 +400,7 @@ components:
           type: string
           description: Whether this LDAP is used for service accounts or user accounts.
           enum: [service, user]
-      required: [ldap_id, url, user_dn, bind_dn, bind_credential, account_type]
+      required: [ldap_id, url, port, use_ssl, user_dn, bind_dn, bind_credential, account_type]
 
 
     LDAP:
@@ -406,6 +412,12 @@ components:
         url:
           type: string
           description: url to the LDAP
+        port:
+          type: integer
+          description: port for the LDAP
+        use_ssl:
+          type: boolean
+          description: Whether to use SSL with the LDAP
         user_dn:
           type: string
           description: base DN for users

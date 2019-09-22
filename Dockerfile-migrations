@@ -1,4 +1,4 @@
-# image: tapis/tenants-api
+# image: tapis/tenants-api-migrations
 from tapis/tenants-api
 
 COPY migrations /home/tapis/migrations
