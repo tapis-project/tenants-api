@@ -1,3 +1,4 @@
+import datetime
 import enum
 from flask import Flask
 from flask_migrate import Migrate
@@ -22,7 +23,9 @@ class TenantOwner(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     name = db.Column(db.String(80), unique=False, nullable=False)
     institution = db.Column(db.String(80), unique=True, nullable=False)
-    # tenants = db.relationship("Tenant", backref="owner")
+    create_time = db.Column(db.DateTime, nullable=False)
+    last_update_time = db.Column(db.DateTime, default=datetime.datetime.utcnow, nullable=False)
+
 
     def __repr__(self):
         return f'{self.username}, {self.institution}'
@@ -33,6 +36,8 @@ class TenantOwner(db.Model):
             "email": self.email,
             "name": self.name,
             "institution": self.institution,
+            "create_time": self.create_time,
+            "last_update_time": self.last_update_time,
         }
 
 
@@ -61,6 +66,8 @@ class LDAPConnection(db.Model):
     bind_dn = db.Column(db.String(200), unique=False, nullable=False)
     bind_credential = db.Column(db.String(200), unique=False, nullable=False)
     account_type = db.Column(db.Enum(LDAPAccountTypes), unique=False, nullable=False)
+    create_time = db.Column(db.DateTime, nullable=False)
+    last_update_time = db.Column(db.DateTime, default=datetime.datetime.utcnow, nullable=False)
 
     @property
     def serialize(self):
@@ -73,6 +80,8 @@ class LDAPConnection(db.Model):
             'use_ssl': self.use_ssl,
             'bind_credential': self.bind_credential,
             'account_type': self.account_type.serialize,
+            "create_time": self.create_time,
+            "last_update_time": self.last_update_time,
         }
 
 
@@ -81,9 +90,14 @@ class Tenant(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     tenant_id = db.Column(db.String(50), unique=True, nullable=False)
     base_url = db.Column(db.String(2000), unique=True, nullable=False)
+    is_owned_by_associate_site = db.Column(db.Boolean, unique=False, nullable=False)
     token_service = db.Column(db.String(2000), unique=True, nullable=False)
     security_kernel = db.Column(db.String(2000), unique=True, nullable=False)
+    authenticator = db.Column(db.String(2000), unique=True, nullable=False)
     owner = db.Column(db.String(120), db.ForeignKey('tenantOwners.email'), nullable=False)
+    create_time = db.Column(db.DateTime, nullable=False)
+    last_update_time = db.Column(db.DateTime, default=datetime.datetime.utcnow, nullable=False)
+
     # ldap connections are not required if the tenant will use an alternative mechanism for authenticating accounts -
     service_ldap_connection_id = db.Column(db.String(50), db.ForeignKey('ldap_connections.ldap_id'), nullable=True)
     user_ldap_connection_id = db.Column(db.String(50), db.ForeignKey('ldap_connections.ldap_id'), nullable=True)
@@ -103,4 +117,6 @@ class Tenant(db.Model):
             'service_ldap_connection_id': self.service_ldap_connection_id,
             'user_ldap_connection_id': self.user_ldap_connection_id,
             'description': self.description,
+            "create_time": self.create_time,
+            "last_update_time": self.last_update_time,
         }

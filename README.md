@@ -130,7 +130,7 @@ We will create two LDAP objects for the TACC tenant, one for user accounts and o
 service accounts. First we create the service account ldap:
 
 ```
-$ curl localhost:5000/ldaps -H "content-type: application/json" -d '{"url":"ldaps://tapisldap.tacc.utexas.edu:636", "user_dn": "ou=tacc.prod.service,dc=tapisapi", "bind_dn": "cn=admin,dc=tapisapi", "bind_credential": "/tapis/tapis.prod.ldapbind", "account_type": "service", "ldap_id": "tacc.prod.service"}'
+$ curl localhost:5000/ldaps -H "content-type: application/json" -d '{"url":"ldaps://tapisldap.tacc.utexas.edu", "port": 636, "use_ssl": true, "user_dn": "ou=tacc.prod.service,dc=tapisapi", "bind_dn": "cn=admin,dc=tapisapi", "bind_credential": "/tapis/tapis.prod.ldapbind", "account_type": "service", "ldap_id": "tacc.prod.service"}'
 {
 	"message": "LDAP object created successfully.",
 	"result": {
@@ -150,7 +150,7 @@ $ curl localhost:5000/ldaps -H "content-type: application/json" -d '{"url":"ldap
 Next, the user accounts ldap:
 
 ```
-$ curl localhost:5000/ldaps -H "content-type: application/json" -d '{"url":"ldaps://ldap.tacc.utexas.edu:636", "user_dn": "ou=People,dc=tacc,dc=utexas,dc=edu", "bind_dn": "uid=ldapbind,ou=People,dc=tacc,dc=utexas,dc=edu", "bind_credential": "/tapis/tacc.prod.ldapbind", "account_type": "user", "ldap_id": "tacc-all"}'
+$ curl localhost:5000/ldaps -H "content-type: application/json" -d '{"url":"ldaps://ldap.tacc.utexas.edu", "port": 636, "use_ssl": true, "user_dn": "ou=People,dc=tacc,dc=utexas,dc=edu", "bind_dn": "uid=ldapbind,ou=People,dc=tacc,dc=utexas,dc=edu", "bind_credential": "/tapis/tacc.prod.ldapbind", "account_type": "user", "ldap_id": "tacc-all"}'
 {
 	"message": "LDAP object created successfully.",
 	"result": {
@@ -192,8 +192,7 @@ Now that we have an owner and LDAP objects created, we are ready to create our T
 tenant.
 
 ```
-$ curl localhost:5000/tenants -H "content-type: application/json" \ 
--d '{"tenant_id":"tacc", "base_url": "https://api.tacc.utexas.edu", "token_service": "https://api.tacc.utexas.edu/token/v3", "security_kernel": "https://api.tacc.utexas.edu/security/v3", "owner": "jstubbs@tacc.utexas.edu", "service_ldap_connection_id": "tacc.prod.service", "user_ldap_connection_id": "tacc-all", "description": "Production tenant for all TACC users."}'
+$ curl localhost:5000/tenants -H "content-type: application/json" -d '{"tenant_id":"tacc", "base_url": "https://api.tacc.utexas.edu", "token_service": "https://api.tacc.utexas.edu/token/v3", "security_kernel": "https://api.tacc.utexas.edu/security/v3", "owner": "jstubbs@tacc.utexas.edu", "service_ldap_connection_id": "tacc.prod.service", "user_ldap_connection_id": "tacc-all", "description": "Production tenant for all TACC users."}'
 
 {
   "message": "Tenant created successfully.",

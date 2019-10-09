@@ -65,7 +65,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Tenant'
+              $ref: '#/components/schemas/NewTenant'
       responses:
         '201':
           description: Created
@@ -431,27 +431,40 @@ components:
           type: string
           description: Whether this LDAP is used for service accounts or user accounts.
           enum: [service, user]
+        create_time:
+          type: string
+          description: The time the client was created.
+        last_update_time:
+          type: string
+          description: The time the client was last updated.
 
     arrayOfLDAPs:
       type: array
       items:
         $ref: '#/components/schemas/LDAP'
 
-    Tenant:
+    NewTenant:
       type: object
       properties:
         tenant_id:
           type: string
+          pattern: "^[a-zA-Z0-9-]*$"
           description: The unique identifier for the tenant.
         base_url:
           type: string
           description: The base URL for the tenant.
+        is_owned_by_associate_site:
+          type: boolean
+          description: Whether the tenant is hosted by an associate site.
         token_service:
           type: string
           description: The resolvable location of the token service for the tenant.
         security_kernel:
           type: string
           description: The resolvable location of the security kernel for the tenant.
+        authenticator:
+          type: string
+          description: The resolvable location of the authenticator for the tenant.
         owner:
           type: string
           description: The email address of the primary owner and contact for the tenant.
@@ -464,7 +477,49 @@ components:
         description:
           type: string
           description: A description of the tenant.
-      required: [tenant_id, base_url, token_service, security_kernel, owner]
+      required: [tenant_id, base_url, is_owned_by_associate_site, token_service, security_kernel, authenticator, owner]
+
+    Tenant:
+      type: object
+      properties:
+        tenant_id:
+          type: string
+          pattern: (\w)*
+          description: The unique identifier for the tenant.
+        base_url:
+          type: string
+          description: The base URL for the tenant.
+        is_owned_by_associate_site:
+          type: boolean
+          description: Whether the tenant is hosted by an associate site.
+        token_service:
+          type: string
+          description: The resolvable location of the token service for the tenant.
+        security_kernel:
+          type: string
+          description: The resolvable location of the security kernel for the tenant.
+        authenticator:
+          type: string
+          description: The resolvable location of the authenticator for the tenant.
+        owner:
+          type: string
+          description: The email address of the primary owner and contact for the tenant.
+        service_ldap_connection_id:
+          type: string
+          description: The unique identifier for the LDAP object for service accounts in the tenant.
+        user_ldap_connection_id:
+          type: string
+          description: The unique identifier for the LDAP object for user accounts in the tenant.
+        description:
+          type: string
+          description: A description of the tenant.
+        create_time:
+          type: string
+          description: The time the client was created.
+        last_update_time:
+          type: string
+          description: The time the client was last updated.
+      required: [tenant_id, base_url, is_owned_by_associate_site, token_service, security_kernel, authenticator, owner]
 
     arrayOfTenants:
       type: array
@@ -483,6 +538,12 @@ components:
         institution:
           type: string
           description: The owner's institution.
+        create_time:
+          type: string
+          description: The time the client was created.
+        last_update_time:
+          type: string
+          description: The time the client was last updated.
       required: [name, email, institution]
 
     arrayOfOwners:

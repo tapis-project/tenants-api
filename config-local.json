@@ -1,0 +1,7 @@
+{
+  "service_name": "tenants",
+  "tenants": ["*"],
+  "use_sk": false,
+  "log_level": "DEBUG",
+  "show_traceback": false
+}

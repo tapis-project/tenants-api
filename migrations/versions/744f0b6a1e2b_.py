@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 43bdf95c8305
+Revision ID: 744f0b6a1e2b
 Revises: 
-Create Date: 2019-09-13 16:12:37.959645
+Create Date: 2019-10-09 20:47:09.078702
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '43bdf95c8305'
+revision = '744f0b6a1e2b'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -22,10 +22,14 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('ldap_id', sa.String(length=50), nullable=False),
     sa.Column('url', sa.String(length=2000), nullable=False),
+    sa.Column('port', sa.Integer(), nullable=False),
+    sa.Column('use_ssl', sa.Boolean(), nullable=False),
     sa.Column('user_dn', sa.String(length=200), nullable=False),
     sa.Column('bind_dn', sa.String(length=200), nullable=False),
     sa.Column('bind_credential', sa.String(length=200), nullable=False),
     sa.Column('account_type', sa.Enum('user', 'service', name='ldapaccounttypes'), nullable=False),
+    sa.Column('create_time', sa.DateTime(), nullable=False),
+    sa.Column('last_update_time', sa.DateTime(), nullable=False),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('ldap_id')
     )
@@ -34,6 +38,8 @@ def upgrade():
     sa.Column('email', sa.String(length=120), nullable=False),
     sa.Column('name', sa.String(length=80), nullable=False),
     sa.Column('institution', sa.String(length=80), nullable=False),
+    sa.Column('create_time', sa.DateTime(), nullable=False),
+    sa.Column('last_update_time', sa.DateTime(), nullable=False),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email'),
     sa.UniqueConstraint('institution')
@@ -42,9 +48,13 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('tenant_id', sa.String(length=50), nullable=False),
     sa.Column('base_url', sa.String(length=2000), nullable=False),
+    sa.Column('is_owned_by_associate_site', sa.Boolean(), nullable=False),
     sa.Column('token_service', sa.String(length=2000), nullable=False),
     sa.Column('security_kernel', sa.String(length=2000), nullable=False),
+    sa.Column('authenticator', sa.String(length=2000), nullable=False),
     sa.Column('owner', sa.String(length=120), nullable=False),
+    sa.Column('create_time', sa.DateTime(), nullable=False),
+    sa.Column('last_update_time', sa.DateTime(), nullable=False),
     sa.Column('service_ldap_connection_id', sa.String(length=50), nullable=True),
     sa.Column('user_ldap_connection_id', sa.String(length=50), nullable=True),
     sa.Column('description', sa.String(length=1000), nullable=True),
@@ -52,6 +62,7 @@ def upgrade():
     sa.ForeignKeyConstraint(['service_ldap_connection_id'], ['ldap_connections.ldap_id'], ),
     sa.ForeignKeyConstraint(['user_ldap_connection_id'], ['ldap_connections.ldap_id'], ),
     sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('authenticator'),
     sa.UniqueConstraint('base_url'),
     sa.UniqueConstraint('security_kernel'),
     sa.UniqueConstraint('tenant_id'),
