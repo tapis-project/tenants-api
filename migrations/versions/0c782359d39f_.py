@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 744f0b6a1e2b
+Revision ID: 0c782359d39f
 Revises: 
-Create Date: 2019-10-09 20:47:09.078702
+Create Date: 2019-10-10 21:33:11.091792
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '744f0b6a1e2b'
+revision = '0c782359d39f'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -41,8 +41,7 @@ def upgrade():
     sa.Column('create_time', sa.DateTime(), nullable=False),
     sa.Column('last_update_time', sa.DateTime(), nullable=False),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('email'),
-    sa.UniqueConstraint('institution')
+    sa.UniqueConstraint('email')
     )
     op.create_table('tenants',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -62,11 +61,8 @@ def upgrade():
     sa.ForeignKeyConstraint(['service_ldap_connection_id'], ['ldap_connections.ldap_id'], ),
     sa.ForeignKeyConstraint(['user_ldap_connection_id'], ['ldap_connections.ldap_id'], ),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('authenticator'),
     sa.UniqueConstraint('base_url'),
-    sa.UniqueConstraint('security_kernel'),
-    sa.UniqueConstraint('tenant_id'),
-    sa.UniqueConstraint('token_service')
+    sa.UniqueConstraint('tenant_id')
     )
     # ### end Alembic commands ###
 

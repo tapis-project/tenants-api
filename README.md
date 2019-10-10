@@ -60,17 +60,20 @@ docker run -it --rm --entrypoint=bash --network=tenants-api_tenants -v $(pwd):/h
 Use any HTTP client to interact with the running API. The following examples use `curl`.
 
 There are three primary collections supported by this API - `/owners`, `/ldaps` and `/tenants`.
-Creating a tenant requires references to LDAP and owner object. 
+Creating a tenant requires references to LDAP and owner object.
 
 To illustrate, we will register the TACC production tenant. We first begin by creating an owner
 for our tenant.
 
+**Note**: Creating, modifying or deleting any of the objects requires a valid Tapis JWT. In the examples
+below, we assume a valid JWT has been exported to the `jwt` variable.
+  
 #### Work With Owners
 Owners have three fields, all required: `name`, `email`, and `institution`. We can create an 
 owner like so:
 
 ```
-$ curl localhost:5000/owners -H "content-type: application/json" -d '{"name": "Joe Stubbs", "email": "jstubbs@tacc.utexas.edu", "institution": "UT Austin"}'
+$ curl -H "X-Tapis-Token: $jwt" localhost:5000/owners -H "content-type: application/json" -d '{"name": "Joe Stubbs", "email": "jstubbs@tacc.utexas.edu", "institution": "UT Austin"}'
 
 {
   "message": "Owner created successfully.",
@@ -89,7 +92,7 @@ We can list the owners by making a `GET` request to `/owners`, and we can retrie
 an owner using the owner's email address; for example:
 
 ```
-$curl localhost:5000/owners | jq
+$curl -H "X-Tapis-Token: $jwt" localhost:5000/owners | jq
 {
   "message": "Owners retrieved successfully.",
   "result": [
@@ -103,7 +106,7 @@ $curl localhost:5000/owners | jq
   "version": "dev"
 }
 
-curl localhost:5000/owners/jstubbs@tacc.utexas.edu | jq
+curl -H "X-Tapis-Token: $jwt" localhost:5000/owners/jstubbs@tacc.utexas.edu | jq
 {
   "message": "Owner object retrieved successfully.",
   "result": {
@@ -130,7 +133,7 @@ We will create two LDAP objects for the TACC tenant, one for user accounts and o
 service accounts. First we create the service account ldap:
 
 ```
-$ curl localhost:5000/ldaps -H "content-type: application/json" -d '{"url":"ldaps://tapisldap.tacc.utexas.edu", "port": 636, "use_ssl": true, "user_dn": "ou=tacc.prod.service,dc=tapisapi", "bind_dn": "cn=admin,dc=tapisapi", "bind_credential": "/tapis/tapis.prod.ldapbind", "account_type": "service", "ldap_id": "tacc.prod.service"}'
+$ curl -H "X-Tapis-Token: $jwt" localhost:5000/ldaps -H "content-type: application/json" -d '{"url":"ldaps://tapisldap.tacc.utexas.edu", "port": 636, "use_ssl": true, "user_dn": "ou=tacc.prod.service,dc=tapisapi", "bind_dn": "cn=admin,dc=tapisapi", "bind_credential": "/tapis/tapis.prod.ldapbind", "account_type": "service", "ldap_id": "tacc.prod.service"}'
 {
 	"message": "LDAP object created successfully.",
 	"result": {
@@ -150,7 +153,7 @@ $ curl localhost:5000/ldaps -H "content-type: application/json" -d '{"url":"ldap
 Next, the user accounts ldap:
 
 ```
-$ curl localhost:5000/ldaps -H "content-type: application/json" -d '{"url":"ldaps://ldap.tacc.utexas.edu", "port": 636, "use_ssl": true, "user_dn": "ou=People,dc=tacc,dc=utexas,dc=edu", "bind_dn": "uid=ldapbind,ou=People,dc=tacc,dc=utexas,dc=edu", "bind_credential": "/tapis/tacc.prod.ldapbind", "account_type": "user", "ldap_id": "tacc-all"}'
+$ curl -H "X-Tapis-Token: $jwt" localhost:5000/ldaps -H "content-type: application/json" -d '{"url":"ldaps://ldap.tacc.utexas.edu", "port": 636, "use_ssl": true, "user_dn": "ou=People,dc=tacc,dc=utexas,dc=edu", "bind_dn": "uid=ldapbind,ou=People,dc=tacc,dc=utexas,dc=edu", "bind_credential": "/tapis/tacc.prod.ldapbind", "account_type": "user", "ldap_id": "tacc-all"}'
 {
 	"message": "LDAP object created successfully.",
 	"result": {
@@ -171,7 +174,7 @@ Just as with the `/owners` collection and we can list all LDAP objects and get d
 specific LDAP objects using the usual GET requests. For example,
 
 ```
-curl localhost:5000/ldaps/tacc-all | jq
+curl -H "X-Tapis-Token: $jwt" localhost:5000/ldaps/tacc-all | jq
 {
   "message": "LDAP object retrieved successfully.",
   "result": {
@@ -192,7 +195,7 @@ Now that we have an owner and LDAP objects created, we are ready to create our T
 tenant.
 
 ```
-$ curl localhost:5000/tenants -H "content-type: application/json" -d '{"tenant_id":"tacc", "base_url": "https://api.tacc.utexas.edu", "token_service": "https://api.tacc.utexas.edu/token/v3", "security_kernel": "https://api.tacc.utexas.edu/security/v3", "owner": "jstubbs@tacc.utexas.edu", "service_ldap_connection_id": "tacc.prod.service", "user_ldap_connection_id": "tacc-all", "description": "Production tenant for all TACC users."}'
+$ curl -H "X-Tapis-Token: $jwt" localhost:5000/tenants -H "content-type: application/json" -d '{"tenant_id":"tacc", "base_url": "https://api.tacc.utexas.edu", "token_service": "https://api.tacc.utexas.edu/token/v3", "security_kernel": "https://api.tacc.utexas.edu/security/v3", "owner": "jstubbs@tacc.utexas.edu", "service_ldap_connection_id": "tacc.prod.service", "user_ldap_connection_id": "tacc-all", "description": "Production tenant for all TACC users."}'
 
 {
   "message": "Tenant created successfully.",

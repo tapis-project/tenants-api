@@ -1,6 +1,6 @@
 import datetime
 import enum
-from flask import Flask
+from flask import g, Flask
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 
@@ -22,7 +22,7 @@ class TenantOwner(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     name = db.Column(db.String(80), unique=False, nullable=False)
-    institution = db.Column(db.String(80), unique=True, nullable=False)
+    institution = db.Column(db.String(80), unique=False, nullable=False)
     create_time = db.Column(db.DateTime, nullable=False)
     last_update_time = db.Column(db.DateTime, default=datetime.datetime.utcnow, nullable=False)
 
@@ -91,9 +91,9 @@ class Tenant(db.Model):
     tenant_id = db.Column(db.String(50), unique=True, nullable=False)
     base_url = db.Column(db.String(2000), unique=True, nullable=False)
     is_owned_by_associate_site = db.Column(db.Boolean, unique=False, nullable=False)
-    token_service = db.Column(db.String(2000), unique=True, nullable=False)
-    security_kernel = db.Column(db.String(2000), unique=True, nullable=False)
-    authenticator = db.Column(db.String(2000), unique=True, nullable=False)
+    token_service = db.Column(db.String(2000), unique=False, nullable=False)
+    security_kernel = db.Column(db.String(2000), unique=False, nullable=False)
+    authenticator = db.Column(db.String(2000), unique=False, nullable=False)
     owner = db.Column(db.String(120), db.ForeignKey('tenantOwners.email'), nullable=False)
     create_time = db.Column(db.DateTime, nullable=False)
     last_update_time = db.Column(db.DateTime, default=datetime.datetime.utcnow, nullable=False)
@@ -108,7 +108,7 @@ class Tenant(db.Model):
 
     @property
     def serialize(self):
-        return {
+        d = {
             'tenant_id': self.tenant_id,
             'base_url': self.base_url,
             'token_service': self.token_service,
@@ -120,3 +120,7 @@ class Tenant(db.Model):
             "create_time": self.create_time,
             "last_update_time": self.last_update_time,
         }
+        if g.no_token:
+            d.pop('service_ldap_connection_id')
+            d.pop('user_ldap_connection_id')
+        return d
