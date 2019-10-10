@@ -2,9 +2,15 @@ from flask_migrate import Migrate
 
 from common.utils import TapisApi, handle_error, flask_errors_dict
 
+from service.auth import authn_and_authz
 from service.controllers import LDAPsResource, LDAPResource, OwnersResource, OwnerResource, TenantsResource, \
     TenantResource
 from service.models import db, app
+
+# authentication and authorization ---
+@app.before_request
+def authnz_for_authenticator():
+    authn_and_authz()
 
 # db and migrations ----
 db.init_app(app)
