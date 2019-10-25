@@ -1,21 +1,7 @@
 import datetime
 import enum
 from flask import g, Flask
-from flask_migrate import Migrate
-from flask_sqlalchemy import SQLAlchemy
-
-from common.config import conf
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = conf.sql_db_url
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
-
-# import connexion
-# app = connexion.FlaskApp(__name__, specification_dir='resources/')
-# app.app.config['SQLALCHEMY_DATABASE_URI'] = conf.sql_db_url
-# db = SQLAlchemy(app.app)
-# migrate = Migrate(app.app, db)
-
+from service import db
 
 class TenantOwner(db.Model):
     __tablename__ = 'tenantOwners'

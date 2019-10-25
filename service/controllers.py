@@ -5,9 +5,9 @@ from openapi_core.shortcuts import RequestValidator
 from openapi_core.wrappers.flask import FlaskOpenAPIRequest
 # import psycopg2
 import sqlalchemy
-
+from service import db
 from common import utils, errors
-from service.models import db, LDAPConnection, TenantOwner, Tenant
+from service.models import LDAPConnection, TenantOwner, Tenant
 
 # get the logger instance -
 from common.logs import get_logger
