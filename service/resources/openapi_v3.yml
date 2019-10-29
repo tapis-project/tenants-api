@@ -370,7 +370,7 @@ components:
         status:
           type: string
           description: Whether the request was a success or failure.
-          enum: [success, failure]
+          enum: [success, error]
 
     NewLDAP:
       type: object

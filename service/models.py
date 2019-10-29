@@ -36,6 +36,9 @@ class LDAPAccountTypes(enum.Enum):
             return 'user'
         return 'service'
 
+    def __str__(self):
+        return self.__repr__()
+
     @property
     def serialize(self):
         return str(self)
