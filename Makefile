@@ -22,6 +22,10 @@ build.migrations:
 
 build: build.api build.migrations
 
+# ----- run tests
+
+test:
+	cd $(cwd); touch service.log; docker-compose run $(api) pytest;
 
 # ----- wipe the local environment by removing all containers
 clean:

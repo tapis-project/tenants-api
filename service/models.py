@@ -14,7 +14,7 @@ class TenantOwner(db.Model):
 
 
     def __repr__(self):
-        return f'{self.username}, {self.institution}'
+        return f'{self.email}, {self.institution}'
 
     @property
     def serialize(self):
