@@ -27,12 +27,16 @@ build: build.api build.migrations
 test:
 	cd $(cwd); touch service.log; docker-compose run $(api) pytest;
 
-# ----- wipe the local environment by removing all containers
-clean:
+# ----- shutdown the currently running services
+down:
 	docker-compose down
 
+# ----- wipe the local environment by removing all data and containers
+clean: down
+	docker volume rm $(api)-api_pgdata
+
 # ----- start databases
-run_dbs: build.api clean
+run_dbs: build.api down
 	cd $(cwd); docker-compose up -d postgres
 
 # ----- connect to db as root
@@ -48,7 +52,6 @@ init_dbs: run_dbs
 
 # ----- wipe database and associated data
 wipe: clean
-	docker volume rm $(api)-api_pgdata
 	rm -rf migrations
 
 # ----- run migrations
