@@ -18,15 +18,13 @@ services:
             - tenants
 
     migrations:
-        # image: tapis/tenants-api-migrations
-        image: migrations
+        image: tapis/tenants-api-migrations
         volumes:
             - ./config-local.json:/home/tapis/config.json
         networks:
             - tenants
 
     tenants:
-        # build: .
         image: tapis/tenants-api:latest
         ports:
             - "5000:5000"
