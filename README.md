@@ -195,13 +195,16 @@ Now that we have an owner and LDAP objects created, we are ready to create our T
 tenant.
 
 ```
-$ curl -H "X-Tapis-Token: $jwt" localhost:5000/tenants -H "content-type: application/json" -d '{"tenant_id":"tacc", "base_url": "https://api.tacc.utexas.edu", "token_service": "https://api.tacc.utexas.edu/token/v3", "security_kernel": "https://api.tacc.utexas.edu/security/v3", "owner": "jstubbs@tacc.utexas.edu", "service_ldap_connection_id": "tacc.prod.service", "user_ldap_connection_id": "tacc-all", "description": "Production tenant for all TACC users."}'
+$ curl -H "X-Tapis-Token: $jwt" localhost:5000/tenants -H "content-type: application/json" -d '{"tenant_id":"tacc", "base_url": "https://api.tacc.utexas.edu", "token_service": "https://api.tacc.utexas.edu/token/v3", "security_kernel": "https://api.tacc.utexas.edu/security/v3", "owner": "jstubbs@tacc.utexas.edu", "service_ldap_connection_id": "tacc.prod.service", "user_ldap_connection_id": "tacc-all", "description": "Production tenant for all TACC users.", "is_owned_by_associate_site": true, "authenticator": "https://api.tacc.utexas.edu/oauth2/v3"}'
 
 {
   "message": "Tenant created successfully.",
   "result": {
+    "authenticator": "https://api.tacc.utexas.edu/oauth2/v3",
     "base_url": "https://api.tacc.utexas.edu",
+    "create_time": "Mon, 04 Nov 2019 20:09:18 GMT",
     "description": "Production tenant for all TACC users.",
+    "last_update_time": "Mon, 04 Nov 2019 20:09:18 GMT",
     "owner": "jstubbs@tacc.utexas.edu",
     "security_kernel": "https://api.tacc.utexas.edu/security/v3",
     "service_ldap_connection_id": "tacc.prod.service",
