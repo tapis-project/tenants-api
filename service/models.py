@@ -102,6 +102,7 @@ class Tenant(db.Model):
             'base_url': self.base_url,
             'token_service': self.token_service,
             'security_kernel': self.security_kernel,
+            'authenticator': self.authenticator,
             'owner': self.owner,
             'service_ldap_connection_id': self.service_ldap_connection_id,
             'user_ldap_connection_id': self.user_ldap_connection_id,
@@ -109,7 +110,7 @@ class Tenant(db.Model):
             "create_time": self.create_time,
             "last_update_time": self.last_update_time,
         }
-        if g.no_token:
+        if hasattr(g, 'no_token') and g.no_token:
             d.pop('service_ldap_connection_id')
             d.pop('user_ldap_connection_id')
         return d
