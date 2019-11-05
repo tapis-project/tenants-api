@@ -147,25 +147,32 @@ class TenantsResource(Resource):
         validator = RequestValidator(utils.spec)
         result = validator.validate(FlaskOpenAPIRequest(request))
         if result.errors:
+            logger.debug(f"openapi_core validattion failed. errors: {result.errors}")
             raise errors.ResourceError(msg=f'Invalid POST data: {result.errors}.')
+        logger.debug("initial openapi_core validation passed.")
         validated_params = result.parameters
         validated_body = result.body
+
         # validate the existence of the ldap and owner objects:
         owner = TenantOwner.query.filter_by(email=validated_body.owner).first()
         if not owner:
             raise errors.ResourceError(msg=f'Invalid tenant description. Owner {validated_body.owner} not found.')
+        logger.debug("owner was valid.")
+
         # ldap objects are optional:
-        if validated_body.user_ldap_connection_id:
+        if getattr(validated_body, 'user_ldap_connection_id', None):
             ldap = LDAPConnection.query.filter_by(ldap_id=validated_body.user_ldap_connection_id).first()
             if not ldap:
                 raise errors.ResourceError(msg=f'Invalid tenant description. '
                                                f'LDAP {validated_body.user_ldap_connection_id} not found.')
-        if validated_body.service_ldap_connection_id and \
-                not validated_body.service_ldap_connection_id == validated_body.user_ldap_connection_id:
+        if getattr(validated_body, 'service_ldap_connection_id', None) and \
+                not validated_body.service_ldap_connection_id == getattr(validated_body, 'user_ldap_connection_id', None):
             ldap = LDAPConnection.query.filter_by(ldap_id=validated_body.service_ldap_connection_id).first()
             if not ldap:
                 raise errors.ResourceError(msg=f'Invalid tenant description. '
                                                f'LDAP {validated_body.service_ldap_connection_id} not found.')
+
+        logger.debug("ldap was valid; creating tenant record..")
         # create the tenant record --
         tenant = Tenant(tenant_id=validated_body.tenant_id,
                         base_url=validated_body.base_url,
@@ -174,17 +181,21 @@ class TenantsResource(Resource):
                         security_kernel=validated_body.security_kernel,
                         authenticator=validated_body.authenticator,
                         owner=validated_body.owner,
-                        service_ldap_connection_id=validated_body.service_ldap_connection_id,
-                        user_ldap_connection_id=validated_body.user_ldap_connection_id,
-                        description=validated_body.description,
+                        service_ldap_connection_id=getattr(validated_body, 'service_ldap_connection_id', None),
+                        user_ldap_connection_id=getattr(validated_body, 'user_ldap_connection_id', None),
+                        description=getattr(validated_body, 'description', None),
                         create_time=datetime.datetime.utcnow(),
                         last_update_time=datetime.datetime.utcnow())
         db.session.add(tenant)
         try:
             db.session.commit()
+            logger.info(f"new tenant committed to db. tenant object: {tenant}")
         except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.DBAPIError) as e:
+            logger.debug(f"got exception trying to commit new tenant object to db. Exception: {e}")
             msg = utils.get_message_from_sql_exc(e)
+            logger.debug(f"returning msg: {msg}")
             raise errors.ResourceError(f"Invalid POST data; {msg}")
+        logger.debug("returning serialized tenant object.")
         return utils.ok(result=tenant.serialize, msg="Tenant created successfully.")
 
 
