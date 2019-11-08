@@ -23,6 +23,8 @@ services:
             - ./config-local.json:/home/tapis/config.json
         networks:
             - tenants
+        depends_on:
+            - postgres
 
     tenants:
         image: tapis/tenants-api:latest

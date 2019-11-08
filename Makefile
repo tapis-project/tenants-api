@@ -46,7 +46,7 @@ connect_db:
 # ----- initialize databases; run this target once per database installation
 init_dbs: run_dbs
 	echo "wait for db to start up..."
-	sleep 8
+	sleep 4
 	docker cp new_db.sql $(api)-api_postgres_1:/db.sql
 	docker-compose exec -T postgres psql -Upostgres -f /db.sql
 
