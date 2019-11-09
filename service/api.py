@@ -20,14 +20,14 @@ api.handle_exception = handle_error
 api.handle_user_exception = handle_error
 
 # Add resources
-api.add_resource(LDAPsResource, '/ldaps')
-api.add_resource(LDAPResource, '/ldaps/<ldap_id>')
+api.add_resource(LDAPsResource, '/v3/ldaps')
+api.add_resource(LDAPResource, '/v3/ldaps/<ldap_id>')
 
-api.add_resource(OwnersResource, '/owners')
-api.add_resource(OwnerResource, '/owners/<email>')
+api.add_resource(OwnersResource, '/v3/owners')
+api.add_resource(OwnerResource, '/v3/owners/<email>')
 
-api.add_resource(TenantsResource, '/tenants')
-api.add_resource(TenantResource, '/tenants/<tenant_id>')
+api.add_resource(TenantsResource, '/v3/tenants')
+api.add_resource(TenantResource, '/v3/tenants/<tenant_id>')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)

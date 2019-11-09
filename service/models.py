@@ -1,6 +1,7 @@
 import datetime
 import enum
 from flask import g, Flask
+from sqlalchemy.types import ARRAY
 from service import db
 
 class TenantOwner(db.Model):
@@ -80,6 +81,7 @@ class Tenant(db.Model):
     tenant_id = db.Column(db.String(50), unique=True, nullable=False)
     base_url = db.Column(db.String(2000), unique=True, nullable=False)
     is_owned_by_associate_site = db.Column(db.Boolean, unique=False, nullable=False)
+    allowable_x_tenant_ids = db.Column(ARRAY(db.String(50)), unique=False, nullable=False)
     token_service = db.Column(db.String(2000), unique=False, nullable=False)
     security_kernel = db.Column(db.String(2000), unique=False, nullable=False)
     authenticator = db.Column(db.String(2000), unique=False, nullable=False)
@@ -100,6 +102,8 @@ class Tenant(db.Model):
         d = {
             'tenant_id': self.tenant_id,
             'base_url': self.base_url,
+            'is_owned_by_associate_site': self.is_owned_by_associate_site,
+            'allowable_x_tenant_ids': self.allowable_x_tenant_ids,
             'token_service': self.token_service,
             'security_kernel': self.security_kernel,
             'authenticator': self.authenticator,

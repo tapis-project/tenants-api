@@ -16,6 +16,8 @@ info:
 servers:
 - url: http://localhost:5000
   description: Local Development
+- url: https://dev.develop.tapis.io
+  description: Develop Instance
 
 #security:
 #  - wso2jwtDevAuth: []
@@ -23,7 +25,7 @@ servers:
 
 
 paths:
-  /tenants:
+  /v3/tenants:
     get:
       tags:
       - Tenants
@@ -78,13 +80,13 @@ paths:
                   result:
                     $ref: '#/components/schemas/Tenant'
 
-  /tenants/{tenant_id}:
+  /v3/tenants/{tenant_id}:
     get:
       tags:
       - Tenants
       summary: Get tenant details
       description: Get details of a specific tenant by its id.
-      operationId: getTenant
+      operationId: get_tenant
       parameters:
       - name: tenant_id
         in: path
@@ -108,7 +110,7 @@ paths:
       - Tenants
       summary: Delete a tenant
       description: Permenantly delete a tenant.
-      operationId: deleteTenant
+      operationId: delete_tenant
       parameters:
       - name: tenant_id
         in: path
@@ -131,7 +133,7 @@ paths:
                     nullable: true
                     enum: [null]
 
-  /ldaps:
+  /v3/ldaps:
     get:
       tags:
       - Tenants
@@ -188,14 +190,14 @@ paths:
                   result:
                     $ref: '#/components/schemas/LDAP'
 
-  /ldaps/{ldap_id}:
+  /v3/ldaps/{ldap_id}:
     get:
       tags:
       - Tenants
       - Ldaps
       summary: Get ldap details
       description: Get details of a specific ldap by its id.
-      operationId: getLdap
+      operationId: get_ldap
       parameters:
       - name: ldap_id
         in: path
@@ -220,7 +222,7 @@ paths:
       - Ldaps
       summary: Delete ldap
       description: Permenantly delete an ldap.
-      operationId: deleteLdap
+      operationId: delete_ldap
       parameters:
       - name: ldap_id
         in: path
@@ -243,7 +245,7 @@ paths:
                     nullable: true
                     enum: [null]
 
-  /owners:
+  /v3/owners:
     get:
       tags:
       - Tenants
@@ -300,14 +302,14 @@ paths:
                   result:
                     $ref: '#/components/schemas/Owner'
 
-  /owners/{email}:
+  /v3/owners/{email}:
     get:
       tags:
       - Tenants
       - Owners
       summary: Get owner details
       description: Get details of a specific owner by its email address.
-      operationId: getOwner
+      operationId: get_owner
       parameters:
       - name: email
         in: path
@@ -332,7 +334,7 @@ paths:
       - Owners
       summary: Delete owner
       description: Permenantly delete an owner.
-      operationId: deleteOwner
+      operationId: delete_owner
       parameters:
       - name: email
         in: path
@@ -456,6 +458,12 @@ components:
         is_owned_by_associate_site:
           type: boolean
           description: Whether the tenant is hosted by an associate site.
+        allowable_x_tenant_ids:
+          type: array
+          items:
+            type: string
+            pattern: "^[a-zA-Z0-9-]*$"
+          description: The list of tenant_ids that services can use to set the X-Tapis-Tenant header.
         token_service:
           type: string
           description: The resolvable location of the token service for the tenant.
@@ -477,7 +485,7 @@ components:
         description:
           type: string
           description: A description of the tenant.
-      required: [tenant_id, base_url, is_owned_by_associate_site, token_service, security_kernel, authenticator, owner]
+      required: [tenant_id, base_url, is_owned_by_associate_site, allowable_x_tenant_ids, token_service, security_kernel, authenticator, owner]
 
     Tenant:
       type: object
@@ -492,6 +500,12 @@ components:
         is_owned_by_associate_site:
           type: boolean
           description: Whether the tenant is hosted by an associate site.
+        allowable_x_tenant_ids:
+          type: array
+          items:
+            type: string
+            pattern: "^[a-zA-Z0-9-]*$"
+          description: The list of tenant_ids that services can use to set the X-Tapis-Tenant header.
         token_service:
           type: string
           description: The resolvable location of the token service for the tenant.
@@ -510,6 +524,9 @@ components:
         user_ldap_connection_id:
           type: string
           description: The unique identifier for the LDAP object for user accounts in the tenant.
+        public_key:
+          type: string
+          description: The public key that should be used to validate the signatures of JWTs associated with the tenant.
         description:
           type: string
           description: A description of the tenant.
@@ -519,7 +536,7 @@ components:
         last_update_time:
           type: string
           description: The time the client was last updated.
-      required: [tenant_id, base_url, is_owned_by_associate_site, token_service, security_kernel, authenticator, owner]
+      required: [tenant_id, base_url, is_owned_by_associate_site, allowable_x_tenant_ids, token_service, security_kernel, authenticator, owner]
 
     arrayOfTenants:
       type: array

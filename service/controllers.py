@@ -177,6 +177,7 @@ class TenantsResource(Resource):
         tenant = Tenant(tenant_id=validated_body.tenant_id,
                         base_url=validated_body.base_url,
                         is_owned_by_associate_site=validated_body.is_owned_by_associate_site,
+                        allowable_x_tenant_ids=validated_body.allowable_x_tenant_ids,
                         token_service=validated_body.token_service,
                         security_kernel=validated_body.security_kernel,
                         authenticator=validated_body.authenticator,
