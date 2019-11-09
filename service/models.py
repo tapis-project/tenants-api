@@ -2,6 +2,8 @@ import datetime
 import enum
 from flask import g, Flask
 from sqlalchemy.types import ARRAY
+
+from common.config import conf
 from service import db
 
 class TenantOwner(db.Model):
@@ -110,11 +112,21 @@ class Tenant(db.Model):
             'owner': self.owner,
             'service_ldap_connection_id': self.service_ldap_connection_id,
             'user_ldap_connection_id': self.user_ldap_connection_id,
+            'public_key': self.get_public_key(),
             'description': self.description,
             "create_time": self.create_time,
             "last_update_time": self.last_update_time,
+
         }
         if hasattr(g, 'no_token') and g.no_token:
             d.pop('service_ldap_connection_id')
             d.pop('user_ldap_connection_id')
         return d
+
+    def get_public_key(self):
+        """
+        Return the public key associated with this tenant.
+        :return: (str) The public key, as a string.
+        """
+        # todo - This ultimately needs to be changed to look up the public key from the SK.
+        return conf.dev_jwt_public_key
