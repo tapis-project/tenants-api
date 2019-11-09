@@ -20,12 +20,14 @@ build.api:
 build.migrations:
 	cd $(cwd); docker build -f Dockerfile-migrations -t tapis/$(api)-api-migrations .
 
-build: build.api build.migrations
+build.test:
+	cd $(cwd); docker build -t tapis/$(api)-api-tests -f Dockerfile-tests .;
+
+build: build.api build.migrations build.test
 
 # ----- run tests
-
-test:
-	cd $(cwd); touch service.log; docker-compose run $(api) pytest;
+test: build.test
+	cd $(cwd); touch service.log; docker-compose run $(api)-tests;
 
 # ----- shutdown the currently running services
 down:

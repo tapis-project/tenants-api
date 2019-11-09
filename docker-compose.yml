@@ -38,3 +38,9 @@ services:
         depends_on:
             - postgres
 
+    tenants-tests:
+        image: tapis/tenants-api-tests
+        networks:
+            - tenants
+        volumes:
+            - ./config-local.json:/home/tapis/config.json
