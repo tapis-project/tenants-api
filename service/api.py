@@ -29,5 +29,10 @@ api.add_resource(OwnerResource, '/v3/owners/<email>')
 api.add_resource(TenantsResource, '/v3/tenants')
 api.add_resource(TenantResource, '/v3/tenants/<tenant_id>')
 
+# make sure the dev tenant is in place
+from service.models import ensure_dev_tenant_present
+ensure_dev_tenant_present()
+
+# start the development server
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)

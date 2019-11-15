@@ -5,6 +5,10 @@ from sqlalchemy.types import ARRAY
 
 from common.config import conf
 from service import db
+# get the logger instance -
+from common.logs import get_logger
+logger = get_logger(__name__)
+
 
 class TenantOwner(db.Model):
     __tablename__ = 'tenantOwners'
@@ -77,6 +81,100 @@ class LDAPConnection(db.Model):
         }
 
 
+def get_tenants():
+    """
+    Convenience function to return the list of tenants in the db.
+    :return: (list[dict]) List of tenant descriptions.
+    """
+    try:
+        tenants = Tenant.query.all()
+        return [t.serialize for t in tenants]
+    except Exception as e:
+        logger.info(f"WARNING - got exception trying to calculate the tenants; this better be the migration code "
+                    f"running. exception: {e}")
+        db.session.rollback()
+        return []
+
+
+def ensure_dev_tenant_present():
+    """
+    Ensure the dev tenant is registered in the local db.
+    :return:
+    """
+    tenants = get_tenants()
+    if not tenants == []:
+        return
+    try:
+        add_owner(name='Joe Stubbs', email='jstubbs@tacc.utexas.edu', institution='UT Austin')
+    except Exception as e:
+        logger.info(f'Got exception trying to add an owner; e: {e}')
+        # we swallow this exception and try to add the tenant since it is possible the owner was present but not the
+        # tenant.
+        db.session.rollback()
+    try:
+        add_tenant(tenant_id='dev',
+                   base_url='https://dev.develop.tapi.io',
+                   is_owned_by_associate_site=True,
+                   allowable_x_tenant_ids=['dev'],
+                   token_service='https://dev.develop.tapi.io/v3/tokens',
+                   security_kernel='https://dev.develop.tapi.io/v3/security',
+                   authenticator='https://dev.develop.tapi.io/v3/oauth2',
+                   owner='jstubbs@tacc.utexas.edu',
+                   service_ldap_connection_id=None,
+                   user_ldap_connection_id=None,
+                   description='The dev tenant in the develop instance.')
+    except Exception as e:
+        logger.error(f'Got exception trying to add the dev tenant. e: {e}')
+        # we have to swallow this exception as well because it is possible this code is running from within the
+        # migrations container before the migrations have tun to create the table.
+        db.session.rollback()
+
+def add_owner(name, email, institution):
+    """
+    Convenience function for adding a tenant owner directly to the db.
+    :return:
+    """
+    owner = TenantOwner(name=name,
+                        email=email,
+                        institution=institution,
+                        create_time=datetime.datetime.utcnow(),
+                        last_update_time=datetime.datetime.utcnow()
+                        )
+    db.session.add(owner)
+    db.session.commit()
+
+def add_tenant(tenant_id,
+               base_url,
+               is_owned_by_associate_site,
+               allowable_x_tenant_ids,
+               token_service,
+               security_kernel,
+               authenticator,
+               owner,
+               service_ldap_connection_id,
+               user_ldap_connection_id,
+               description):
+    """
+    Convenience function fot adding a tenant directly to the db.
+    :return:
+    """
+    tenant = Tenant(tenant_id=tenant_id,
+                        base_url=base_url,
+                        is_owned_by_associate_site=is_owned_by_associate_site,
+                        allowable_x_tenant_ids=allowable_x_tenant_ids,
+                        token_service=token_service,
+                        security_kernel=security_kernel,
+                        authenticator=authenticator,
+                        owner=owner,
+                        service_ldap_connection_id=service_ldap_connection_id,
+                        user_ldap_connection_id=user_ldap_connection_id,
+                        description=description,
+                        create_time=datetime.datetime.utcnow(),
+                        last_update_time=datetime.datetime.utcnow())
+    db.session.add(tenant)
+    db.session.commit()
+
+
 class Tenant(db.Model):
     __tablename__ = 'tenants'
     id = db.Column(db.Integer, primary_key=True)
@@ -118,9 +216,15 @@ class Tenant(db.Model):
             "last_update_time": self.last_update_time,
 
         }
-        if hasattr(g, 'no_token') and g.no_token:
-            d.pop('service_ldap_connection_id')
-            d.pop('user_ldap_connection_id')
+        # the following code references the the flask thread-local object, g, but this will throw a runtime error
+        # if executed outside of the application context. that will happen at service initialization when
+        # get_tenants() is called to determine the list of tenants in the system.
+        try:
+            if hasattr(g, 'no_token') and g.no_token:
+                d.pop('service_ldap_connection_id')
+                d.pop('user_ldap_connection_id')
+        except RuntimeError:
+            pass
         return d
 
     def get_public_key(self):
