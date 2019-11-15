@@ -224,3 +224,28 @@ Listing and retrieving tenants works just like in the case of owners and LDAP ob
 ### Beyond the Quickstart
 
 A complete OpenAPI v3 spec file is included in the `service/resources` directory within this repository.
+
+
+## Development
+Follow the instructions for starting the API locally. 
+
+### Running the Tests
+The tests require the database to be running with the migrations applied. 
+Use the ``make test`` command to wipe all data in the local environment,
+rebuild the images and volume, and run the tests.
+
+Alternatively, ``make build`` followed by ``docker-compose run tenants-tests``
+will run the tests on top of a pre-build database with migrations. 
+
+
+Note that since the tests destroy the database structure, it is advised that one
+run a ``make clean`` and re-initialize the database after running tests.  
+
+When ``"use_sk": true`` inside the ``config-local.json``, the tests will also require:
+
+ * A valid Tapis token  representing a user with the ``tenant_creator` role.
+ * The computer where the tests run must be on the TACC VPN.
+ 
+In this case, the test suite will make use of the Security Kernel (sk) running
+in the develop environment. 
+ 
