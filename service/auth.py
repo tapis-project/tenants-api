@@ -27,6 +27,7 @@ def authentication():
     # authorization.
     # we always try to call the primary tapis authentication function to add authentication information to the
     # thread-local. If it fails due to a missing token, we then check if there is a p
+    logger.debug("top of authentication()")
     try:
         auth.authentication()
     except common_errors.NoTokenError as e:
@@ -51,13 +52,24 @@ def authorization():
     Entry point for checking authorization for all requests to the authenticator.
     :return:
     """
+    logger.debug("top of authorization()")
     if not conf.use_sk:
+        logger.debug("not using SK; returning True")
         return True
     if request.method == 'GET' or request.method == 'OPTIONS' or request.method == 'HEAD':
+        logger.debug("method was GET, OPTIONS or HEAD; returning True")
         return True
     # check to make sure the user has the necessary role. -the tenant to check in is based on the tenant being
     # "served" by this instance of the
-    users = t.sk.getUsersWithRole(roleName=ROLE)
+    logger.debug(f"calling SK to check users assigned to role: {ROLE}")
+    try:
+        users = t.sk.getUsersWithRole(roleName=ROLE)
+    except Exception as e:
+        msg = f'Got an error calling the SK. Exception: {e}'
+        logger.error(msg)
+        raise common_errors.PermissionsError(msg=f'Could not verify permissions with the Security Kernel; additional info: {e}')
+    logger.debug(f"got users: {users}; checking if {g.username} is in role.")
     if g.username not in users.names:
+        logger.info(f"user {g.username} was not in role. raising permissions error.")
         raise common_errors.PermissionsError(msg='Not authorized to modify the registry of tenants.')
 
