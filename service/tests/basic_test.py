@@ -53,13 +53,13 @@ def init_db():
 
         tenant = models.Tenant(
             id=888,
-            tenant_id='test',
-            base_url='https://api.tacc.utexas.edu',
+            tenant_id='dev',
+            base_url='https://dev.develop.tapis.io',
             is_owned_by_associate_site=False,
             allowable_x_tenant_ids=['test'],
-            token_service='https://api.tacc.utexas.edu/tokens/v3',
+            token_service='https://dev.develop.tapis.io/v3/tokens',
             authenticator='test-authenticator',
-            security_kernel='https://api.tacc.utexas.edu/security/v3',
+            security_kernel='https://dev.develop.tapis.io/v3/security',
             owner='jlooney@tacc.utexas.edu',
             service_ldap_connection_id='tacc.test.service',
             user_ldap_connection_id='tacc.test.user',
@@ -120,14 +120,14 @@ def test_add_tenant_without_optional_fields(client, init_db):
 
         payload = {
             "id": 23498,
-            "tenant_id":"dev",
-            "base_url": "https://dev.develop.tapis.io",
-            "token_service": "https://dev.develop.tapis.io/token/v3",
-            "security_kernel": "https://dev.develop.tapis.io/security/v3",
+            "tenant_id":"test-dev",
+            "base_url": "https://test-dev.develop.tapis.io",
+            "token_service": "https://test-dev.develop.tapis.io/foo/token",
+            "security_kernel": "https://test-dev.develop.tapis.io/bar/security",
             "owner": "jlooney@tacc.utexas.edu",
             "is_owned_by_associate_site": False,
-            "authenticator": "https://dev.develop.tapis.io/oauth",
-            "allowable_x_tenant_ids": ["dev"],
+            "authenticator": "https://test-dev.develop.tapis.io/foobar/oauth",
+            "allowable_x_tenant_ids": ["test-dev"],
         }
         headers = {
             "X-Tapis-Token": conf.test_jwt
@@ -145,6 +145,7 @@ def test_list_tenants(client, init_db):
         response = client.get("http://localhost:5000/v3/tenants")
         assert response.status_code == 200
         result = response.json['result']
+        print(f"list_tenants found {len(result)} tenants.")
         for tenant in result:
             assert 'tenant_id' in tenant
             assert 'base_url' in tenant
@@ -158,7 +159,7 @@ def test_list_tenants(client, init_db):
 
 def test_get_single_tenant(client, init_db):
     with client:
-        response = client.get("http://localhost:5000/v3/tenants/test")
+        response = client.get("http://localhost:5000/v3/tenants/dev")
         assert response.status_code == 200
 
 
@@ -168,7 +169,7 @@ def test_delete_single_tenant(client, init_db):
             "X-Tapis-Token": conf.test_jwt
         }
         response = client.delete(
-            "http://localhost:5000/v3/tenants/test",
+            "http://localhost:5000/v3/tenants/test-dev",
             headers=headers,
             content_type='application/json'
         )
@@ -217,7 +218,23 @@ def test_delete_single_ldap(client, init_db):
             "X-Tapis-Token": conf.test_jwt
         }
 
-        # First remove the tenant that has the ldap as a foreign key
+        # first check which tenants we have =
+        response = client.get("http://localhost:5000/v3/tenants")
+        assert response.status_code == 200
+        result = response.json['result']
+        print(f"list_tenants found {len(result)} tenants.")
+        for tenant in result:
+            print(tenant['tenant_id'])
+
+        # First remove the tenants that have the ldap as a foreign key
+        response = client.delete(
+            "http://localhost:5000/v3/tenants/dev",
+            headers=headers,
+            content_type='application/json'
+        )
+
+        assert response.status_code == 200
+
         response = client.delete(
             "http://localhost:5000/v3/tenants/tacc",
             headers=headers,
@@ -225,7 +242,6 @@ def test_delete_single_ldap(client, init_db):
         )
 
         assert response.status_code == 200
-
         # Now remove the ldap
         response2 = client.delete(
             "http://localhost:5000/v3/ldaps/tacc.test.user",
