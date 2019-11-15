@@ -216,8 +216,10 @@ class TenantResource(Resource):
         logger.debug(f"top of DELETE /tenants/{tenant_id}")
         tenant = Tenant.query.filter_by(tenant_id=tenant_id).first()
         if not tenant:
+            logger.debug(f"Did not find a tenant with id {tenant_id}. Returning an error.")
             raise errors.ResourceError(msg=f'No tenant found with tenant_id {tenant_id}.')
+        logger.debug("tenant found; issuing delete and commit.")
         db.session.delete(tenant)
         db.session.commit()
-        return utils.ok(result=None, msg=f'Tenant {tenant} deleted successfully.')
+        return utils.ok(result=None, msg=f'Tenant {tenant_id} deleted successfully.')
 
