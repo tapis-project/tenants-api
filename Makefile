@@ -15,7 +15,7 @@ cwd=$(shell pwd)
 # ----- build images
 
 build.api:
-	cd $(cwd); touch service.log; docker build -t tapis/$(api)-api .;
+	cd $(cwd); touch service.log; chmod a+w; docker build -t tapis/$(api)-api .;
 
 build.migrations:
 	cd $(cwd); docker build -f Dockerfile-migrations -t tapis/$(api)-api-migrations .
@@ -25,9 +25,9 @@ build.test:
 
 build: build.api build.migrations build.test
 
-# ----- run tests
-test: build.test
-	cd $(cwd); touch service.log; docker-compose run $(api)-tests;
+# ----- run tests; this will initially wipe the local installation
+test: build clean init_dbs migrate.upgrade
+	cd $(cwd); touch service.log; chmod a+w; docker-compose run $(api)-tests;
 
 # ----- shutdown the currently running services
 down:
