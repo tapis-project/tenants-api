@@ -113,12 +113,12 @@ def ensure_dev_tenant_present():
         db.session.rollback()
     try:
         add_tenant(tenant_id='dev',
-                   base_url='https://dev.develop.tapi.io',
+                   base_url='https://dev.develop.tapis.io',
                    is_owned_by_associate_site=True,
                    allowable_x_tenant_ids=['dev'],
-                   token_service='https://dev.develop.tapi.io/v3/tokens',
-                   security_kernel='https://dev.develop.tapi.io/v3/security',
-                   authenticator='https://dev.develop.tapi.io/v3/oauth2',
+                   token_service='https://dev.develop.tapis.io/v3/tokens',
+                   security_kernel='https://dev.develop.tapis.io/v3/security',
+                   authenticator='https://dev.develop.tapis.io/v3/oauth2',
                    owner='jstubbs@tacc.utexas.edu',
                    service_ldap_connection_id=None,
                    user_ldap_connection_id=None,
