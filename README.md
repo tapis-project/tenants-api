@@ -243,7 +243,7 @@ run a ``make clean`` and re-initialize the database after running tests.
 
 When ``"use_sk": true`` inside the ``config-local.json``, the tests will also require:
 
- * A valid Tapis token  representing a user with the ``tenant_creator` role.
+ * A valid Tapis token representing a user with the ``tenant_creator` role.
  * The computer where the tests run must be on the TACC VPN.
  
 In this case, the test suite will make use of the Security Kernel (sk) running
