@@ -153,6 +153,12 @@ class TenantsResource(Resource):
         validated_params = result.parameters
         validated_body = result.body
 
+        # check reserved words "owners" and "ldaps" -- these cannot be tenant id's:
+        if validated_body.tenant_id.lower() == 'owners':
+            raise errors.ResourceError("Invalid tenant_id; 'owners' is a reserved keyword.")
+        if validated_body.tenant_id.lower() == 'ldaps':
+            raise errors.ResourceError("Invalid tenant_id; 'ldaps' is a reserved keyword.")
+
         # validate the existence of the ldap and owner objects:
         owner = TenantOwner.query.filter_by(email=validated_body.owner).first()
         if not owner:
@@ -208,7 +214,7 @@ class TenantResource(Resource):
     def get(self, tenant_id):
         logger.debug(f"top of GET /tenants/{tenant_id}")
         tenant = Tenant.query.filter_by(tenant_id=tenant_id).first()
-        if not tenant_id:
+        if not tenant:
             raise errors.ResourceError(msg=f'No tenant found with tenant_id {tenant_id}.')
         return utils.ok(result=tenant.serialize, msg='Tenant retrieved successfully.')
 

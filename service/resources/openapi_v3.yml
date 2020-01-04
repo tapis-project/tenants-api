@@ -133,7 +133,7 @@ paths:
                     nullable: true
                     enum: [null]
 
-  /v3/ldaps:
+  /v3/tenants/ldaps:
     get:
       tags:
       - Tenants
@@ -190,7 +190,7 @@ paths:
                   result:
                     $ref: '#/components/schemas/LDAP'
 
-  /v3/ldaps/{ldap_id}:
+  /v3/tenants/ldaps/{ldap_id}:
     get:
       tags:
       - Tenants
@@ -245,7 +245,7 @@ paths:
                     nullable: true
                     enum: [null]
 
-  /v3/owners:
+  /v3/tenants/owners:
     get:
       tags:
       - Tenants
@@ -302,7 +302,7 @@ paths:
                   result:
                     $ref: '#/components/schemas/Owner'
 
-  /v3/owners/{email}:
+  /v3/tenants/owners/{email}:
     get:
       tags:
       - Tenants
@@ -567,5 +567,3 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/Owner'
-
-

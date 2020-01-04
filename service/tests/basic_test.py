@@ -194,7 +194,7 @@ def test_add_ldap_with_post(client, init_db):
             "X-Tapis-Token": conf.test_jwt
         }
         response = client.post(
-            "http://localhost:5000/v3/ldaps",
+            "http://localhost:5000/v3/tenants/ldaps",
             headers=headers,
             data=json.dumps(payload),
             content_type='application/json'
@@ -209,7 +209,7 @@ def test_get_list_of_ldaps(client, init_db):
 
 def test_get_single_ldap(client, init_db):
     with client:
-        response = client.get("http://localhost:5000/v3/ldaps/tacc.test.user")
+        response = client.get("http://localhost:5000/v3/tenants/ldaps/tacc.test.user")
         assert response.status_code == 200
 
 def test_delete_single_ldap(client, init_db):
@@ -244,7 +244,7 @@ def test_delete_single_ldap(client, init_db):
         assert response.status_code == 200
         # Now remove the ldap
         response2 = client.delete(
-            "http://localhost:5000/v3/ldaps/tacc.test.user",
+            "http://localhost:5000/v3/tenants/ldaps/tacc.test.user",
             headers=headers,
             content_type='application/json'
         )
@@ -265,7 +265,7 @@ def test_add_owner_with_post(client, init_db):
         "X-Tapis-Token": conf.test_jwt
     }
     response = client.post(
-        "http://localhost:5000/v3/owners",
+        "http://localhost:5000/v3/tenants/owners",
         headers=headers,
         data=json.dumps(payload),
         content_type='application/json'
@@ -274,13 +274,13 @@ def test_add_owner_with_post(client, init_db):
 
 def test_get_list_of_owners(client, init_db):
     with client:
-        response = client.get("http://localhost:5000/v3/owners")
+        response = client.get("http://localhost:5000/v3/tenants/owners")
         assert response.status_code == 200
 
 
 def test_get_single_owner(client, init_db):
     with client:
-        response = client.get("http://localhost:5000/v3/owners/jstubbs@tacc.utexas.edu")
+        response = client.get("http://localhost:5000/v3/tenants/owners/jstubbs@tacc.utexas.edu")
         assert response.status_code == 200
 
 
@@ -292,7 +292,7 @@ def test_delete_single_owner(client, init_db):
         }
 
         response = client.delete(
-            "http://localhost:5000/v3/owners/jstubbs@tacc.utexas.edu",
+            "http://localhost:5000/v3/tenants/owners/jstubbs@tacc.utexas.edu",
             headers=headers,
             content_type='application/json'
         )

@@ -60,8 +60,8 @@ docker run -it --rm --entrypoint=bash --network=tenants-api_tenants -v $(pwd):/h
 ### Quickstart
 Use any HTTP client to interact with the running API. The following examples use `curl`.
 
-There are three primary collections supported by this API - `/owners`, `/ldaps` and `/tenants`.
-Creating a tenant requires references to LDAP and owner object.
+There are three primary collections supported by this API - `/tenants`, `/tenants/owners`, and `/tenants/ldaps`.
+Creating a tenant requires references to an owner object and (optionally) an LDAP object.
 
 To illustrate, we will register the TACC production tenant. We first begin by creating an owner
 for our tenant.
@@ -74,7 +74,7 @@ Owners have three fields, all required: `name`, `email`, and `institution`. We c
 owner like so:
 
 ```
-$ curl -H "X-Tapis-Token: $jwt" localhost:5000/v3/owners -H "content-type: application/json" -d '{"name": "Joe Stubbs", "email": "jstubbs@tacc.utexas.edu", "institution": "UT Austin"}'
+$ curl -H "X-Tapis-Token: $jwt" localhost:5000/v3/tenants/owners -H "content-type: application/json" -d '{"name": "Joe Stubbs", "email": "jstubbs@tacc.utexas.edu", "institution": "UT Austin"}'
 
 {
   "message": "Owner created successfully.",
@@ -93,7 +93,7 @@ We can list the owners by making a `GET` request to `/owners`, and we can retrie
 an owner using the owner's email address; for example:
 
 ```
-$ curl -H "X-Tapis-Token: $jwt" localhost:5000/v3/owners | jq
+$ curl -H "X-Tapis-Token: $jwt" localhost:5000/v3/tenants/owners | jq
 {
   "message": "Owners retrieved successfully.",
   "result": [
@@ -107,7 +107,7 @@ $ curl -H "X-Tapis-Token: $jwt" localhost:5000/v3/owners | jq
   "version": "dev"
 }
 
-curl -H "X-Tapis-Token: $jwt" localhost:5000/v3/owners/jstubbs@tacc.utexas.edu | jq
+curl -H "X-Tapis-Token: $jwt" localhost:5000/v3/tenants/owners/jstubbs@tacc.utexas.edu | jq
 {
   "message": "Owner object retrieved successfully.",
   "result": {
@@ -134,7 +134,7 @@ We will create two LDAP objects for the TACC tenant, one for user accounts and o
 service accounts. First we create the service account ldap:
 
 ```
-$ curl -H "X-Tapis-Token: $jwt" localhost:5000/v3/ldaps -H "content-type: application/json" -d '{"url":"ldaps://tapisldap.tacc.utexas.edu", "port": 636, "use_ssl": true, "user_dn": "ou=tacc.prod.service,dc=tapisapi", "bind_dn": "cn=admin,dc=tapisapi", "bind_credential": "/tapis/tapis.prod.ldapbind", "account_type": "service", "ldap_id": "tacc.prod.service"}'
+$ curl -H "X-Tapis-Token: $jwt" localhost:5000/v3/tenants/ldaps -H "content-type: application/json" -d '{"url":"ldaps://tapisldap.tacc.utexas.edu", "port": 636, "use_ssl": true, "user_dn": "ou=tacc.prod.service,dc=tapisapi", "bind_dn": "cn=admin,dc=tapisapi", "bind_credential": "/tapis/tapis.prod.ldapbind", "account_type": "service", "ldap_id": "tacc.prod.service"}'
 {
 	"message": "LDAP object created successfully.",
 	"result": {
@@ -154,7 +154,7 @@ $ curl -H "X-Tapis-Token: $jwt" localhost:5000/v3/ldaps -H "content-type: applic
 Next, the user accounts ldap:
 
 ```
-$ curl -H "X-Tapis-Token: $jwt" localhost:5000/v3/ldaps -H "content-type: application/json" -d '{"url":"ldaps://ldap.tacc.utexas.edu", "port": 636, "use_ssl": true, "user_dn": "ou=People,dc=tacc,dc=utexas,dc=edu", "bind_dn": "uid=ldapbind,ou=People,dc=tacc,dc=utexas,dc=edu", "bind_credential": "/tapis/tacc.prod.ldapbind", "account_type": "user", "ldap_id": "tacc-all"}'
+$ curl -H "X-Tapis-Token: $jwt" localhost:5000/v3/tenants/ldaps -H "content-type: application/json" -d '{"url":"ldaps://ldap.tacc.utexas.edu", "port": 636, "use_ssl": true, "user_dn": "ou=People,dc=tacc,dc=utexas,dc=edu", "bind_dn": "uid=ldapbind,ou=People,dc=tacc,dc=utexas,dc=edu", "bind_credential": "/tapis/tacc.prod.ldapbind", "account_type": "user", "ldap_id": "tacc-all"}'
 {
 	"message": "LDAP object created successfully.",
 	"result": {
@@ -175,7 +175,7 @@ Just as with the `/owners` collection and we can list all LDAP objects and get d
 specific LDAP objects using the usual GET requests. For example,
 
 ```
-$ curl -H "X-Tapis-Token: $jwt" localhost:5000/v3/ldaps/tacc-all | jq
+$ curl -H "X-Tapis-Token: $jwt" localhost:5000/v3/tenants/ldaps/tacc-all | jq
 {
   "message": "LDAP object retrieved successfully.",
   "result": {
