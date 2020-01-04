@@ -106,12 +106,26 @@ def ensure_dev_tenant_present():
         return
     try:
         add_owner(name='Joe Stubbs', email='jstubbs@tacc.utexas.edu', institution='UT Austin')
+        add_owner(name='CIC Support', email='CICSupport@tacc.utexas.edu', institution='UT Austin')
     except Exception as e:
         logger.info(f'Got exception trying to add an owner; e: {e}')
         # we swallow this exception and try to add the tenant since it is possible the owner was present but not the
         # tenant.
         db.session.rollback()
     try:
+        # the master tenant
+        add_tenant(tenant_id='master',
+                   base_url='https://master.develop.tapis.io',
+                   is_owned_by_associate_site=True,
+                   allowable_x_tenant_ids=['master', 'dev'],
+                   token_service='https://master.develop.tapis.io/v3/tokens',
+                   security_kernel='https://master.develop.tapis.io/v3/security',
+                   authenticator='https://master.develop.tapis.io/v3/oauth2',
+                   owner='CICSupport@tacc.utexas.edu',
+                   service_ldap_connection_id=None,
+                   user_ldap_connection_id=None,
+                   description='The master tenant in the develop instance.')
+        # the dev tenant
         add_tenant(tenant_id='dev',
                    base_url='https://dev.develop.tapis.io',
                    is_owned_by_associate_site=True,
