@@ -21,6 +21,15 @@ def init_db():
         )
         models.db.session.add(tenant_owner)
         models.db.session.commit()
+        tenant_owner = models.TenantOwner(
+            id='999',
+            email='cicsupport@tacc.utexas.edu',
+            name='CIC Support',
+            institution='TACC',
+            create_time=datetime.datetime.now()
+        )
+        models.db.session.add(tenant_owner)
+        models.db.session.commit()
         ldap_conn1 = models.LDAPConnection(
             id=111,
             ldap_id='tacc.test.service',
@@ -68,6 +77,23 @@ def init_db():
         )
         models.db.session.add(tenant)
         models.db.session.commit()
+
+        tenant = models.Tenant(
+            id=999,
+            tenant_id='master',
+            base_url='https://master.develop.tapis.io',
+            is_owned_by_associate_site=False,
+            allowable_x_tenant_ids=['master', 'test'],
+            token_service='https://master.develop.tapis.io/v3/tokens',
+            authenticator='test-authenticator',
+            security_kernel='https://master.develop.tapis.io/v3/security',
+            owner='cicsupport@tacc.utexas.edu',
+            description='testing',
+            create_time=datetime.datetime.now()
+        )
+        models.db.session.add(tenant)
+        models.db.session.commit()
+
         yield models.db
         models.db.session.close()
         models.db.drop_all()

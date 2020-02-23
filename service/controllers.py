@@ -71,8 +71,21 @@ class LDAPResource(Resource):
         ldap = LDAPConnection.query.filter_by(ldap_id=ldap_id).first()
         if not ldap:
             raise errors.ResourceError(msg=f'No LDAP object found with id {ldap_id}.')
-        db.session.delete(ldap)
-        db.session.commit()
+        # ensure ldap is not references by existing tenant:
+        tenants = Tenant.query.filter_by(service_ldap_connection_id=ldap_id).first()
+        if tenants:
+            logger.info("LDAP currently in use by tenants.")
+            raise errors.ResourceError(msg='This LDAP is in use by existing tenants; delete the tenants firts.')
+        tenants = Tenant.query.filter_by(user_ldap_connection_id=ldap_id).first()
+        if tenants:
+            logger.info("LDAP currently in use by tenants.")
+            raise errors.ResourceError(msg='This LDAP is in use by existing tenants; delete the tenants firts.')
+        try:
+            db.session.delete(ldap)
+            db.session.commit()
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.DBAPIError) as e:
+            msg = utils.get_message_from_sql_exc(e)
+            raise errors.ResourceError(f"Invalid POST data; {msg}")
         return utils.ok(result=None, msg=f'LDAP object {ldap_id} deleted successfully.')
 
 
