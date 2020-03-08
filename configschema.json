@@ -6,6 +6,16 @@
       "type": "string",
       "description": "full URL, including protocol and database, to the SQL db.",
       "default": "postgres://tenants:d3fd6pAssw0rd@postgres:5432/tenants"
+    },
+    "ensure_master_tenant": {
+      "type": "boolean",
+      "description": "Whether to ensure the master tenant is added to the table at start up.",
+      "default": true
+    },
+    "ensure_dev_tenant": {
+      "type": "boolean",
+      "description": "Whether to ensure the dev tenant is added to the table at start up.",
+      "default": true
     }
   }
 }

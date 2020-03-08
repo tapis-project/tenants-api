@@ -96,47 +96,86 @@ def get_tenants():
         return []
 
 
-def ensure_dev_tenant_present():
+def ensure_master_tenant_present():
     """
-    Ensure the dev tenant is registered in the local db.
-    :return:
+    Ensure the master tenant is registered in the local db.
+    :return: 
     """
+    # if the master tenant is already registered, just escape 0
     tenants = get_tenants()
-    if not tenants == []:
-        return
+    for tenant in tenants:
+        if tenant.get('tenant_id') == 'master':
+            return
     try:
-        add_owner(name='Joe Stubbs', email='jstubbs@tacc.utexas.edu', institution='UT Austin')
         add_owner(name='CIC Support', email='CICSupport@tacc.utexas.edu', institution='UT Austin')
     except Exception as e:
         logger.info(f'Got exception trying to add an owner; e: {e}')
         # we swallow this exception and try to add the tenant since it is possible the owner was present but not the
         # tenant.
         db.session.rollback()
+    # use the base URL configured for this Tenants API service.
+    base_url = conf.service_tenant_base_url
+    allowable_x_tenant_ids = ['master']
+    if conf.ensure_dev_tenant:
+        allowable_x_tenant_ids.append('dev')
     try:
         # the master tenant
         add_tenant(tenant_id='master',
-                   base_url='https://master.develop.tapis.io',
+                   base_url=base_url,
                    is_owned_by_associate_site=True,
-                   allowable_x_tenant_ids=['master', 'dev'],
-                   token_service='https://master.develop.tapis.io/v3/tokens',
-                   security_kernel='https://master.develop.tapis.io/v3/security',
-                   authenticator='https://master.develop.tapis.io/v3/oauth2',
+                   allowable_x_tenant_ids=allowable_x_tenant_ids,
+                   token_service=f'{base_url}/v3/tokens',
+                   security_kernel=f'{base_url}/v3/security',
+                   authenticator=f'{base_url}/v3/oauth2',
                    owner='CICSupport@tacc.utexas.edu',
                    service_ldap_connection_id=None,
                    user_ldap_connection_id=None,
-                   description='The master tenant in the develop instance.')
+                   description='The master tenant.')
+    except Exception as e:
+        logger.error(f'Got exception trying to add the dev tenant. e: {e}')
+        # we have to swallow this exception as well because it is possible this code is running from within the
+        # migrations container before the migrations have tun to create the table.
+        db.session.rollback()
+
+
+def ensure_dev_tenant_present():
+    """
+    Ensure the dev tenant is registered in the local db.
+    :return:
+    """
+    tenants = get_tenants()
+    for tenant in tenants:
+        if tenant.get('tenant_id') == 'dev':
+            return
+    base_url = conf.service_tenant_base_url.replace('master', 'dev')
+    # add the dev ldap
+    try:
+        add_ldap(ldap_id="tapis-dev",
+                 url="ldap://ldap",
+                 port=389,
+                 use_ssl=False,
+                 user_dn="ou=tenants.dev,dc=tapis",
+                 bind_dn="cn=admin,dc=tapis",
+                 bind_credential="ldap.tapis-dev.password",
+                 account_type="user")
+    except Exception as e:
+        logger.info(f'Got exception trying to add an ldap; e: {e}')
+        # we swallow this exception and try to add the tenant since it is possible the ldap was present but not the
+        # tenant.
+        db.session.rollback()
+    try:
         # the dev tenant
         add_tenant(tenant_id='dev',
-                   base_url='https://dev.develop.tapis.io',
+                   base_url=base_url,
                    is_owned_by_associate_site=True,
                    allowable_x_tenant_ids=['dev'],
-                   token_service='https://dev.develop.tapis.io/v3/tokens',
-                   security_kernel='https://dev.develop.tapis.io/v3/security',
-                   authenticator='https://dev.develop.tapis.io/v3/oauth2',
-                   owner='jstubbs@tacc.utexas.edu',
+                   token_service=f'{base_url}/v3/tokens',
+                   security_kernel=f'{base_url}/v3/security',
+                   authenticator=f'{base_url}/v3/oauth2',
+                   owner='CICSupport@tacc.utexas.edu',
                    service_ldap_connection_id=None,
-                   user_ldap_connection_id=None,
-                   description='The dev tenant in the develop instance.')
+                   user_ldap_connection_id='tapis-dev',
+                   description='The dev tenant.')
     except Exception as e:
         logger.error(f'Got exception trying to add the dev tenant. e: {e}')
         # we have to swallow this exception as well because it is possible this code is running from within the
@@ -156,6 +195,26 @@ def add_owner(name, email, institution):
                         )
     db.session.add(owner)
     db.session.commit()
+
+
+def add_ldap(ldap_id, account_type, bind_credential, bind_dn, port, url, use_ssl, user_dn):
+    """
+    Convenience function fot adding an ldap object directly to the db.
+    :return:
+    """
+    ldap = LDAPConnection(ldap_id=ldap_id,
+                          account_type=account_type,
+                          bind_credential=bind_credential,
+                          bind_dn=bind_dn,
+                          port=port,
+                          url=url,
+                          use_ssl=use_ssl,
+                          user_dn=user_dn,
+                          create_time=datetime.datetime.utcnow(),
+                          last_update_time=datetime.datetime.utcnow())
+    db.session.add(ldap)
+    db.session.commit()
+
 
 def add_tenant(tenant_id,
                base_url,
@@ -233,12 +292,15 @@ class Tenant(db.Model):
         # the following code references the the flask thread-local object, g, but this will throw a runtime error
         # if executed outside of the application context. that will happen at service initialization when
         # get_tenants() is called to determine the list of tenants in the system.
-        try:
-            if hasattr(g, 'no_token') and g.no_token:
-                d.pop('service_ldap_connection_id')
-                d.pop('user_ldap_connection_id')
-        except RuntimeError:
-            pass
+        #
+        # UPDATE: 3/2020: sending back ldap properties regardless of authentication since some services
+        #                 including the authenticators will need the fields to determine how they should init.
+        # try:
+        #     if hasattr(g, 'no_token') and g.no_token:
+        #         d.pop('service_ldap_connection_id')
+        #         d.pop('user_ldap_connection_id')
+        # except RuntimeError:
+        #     pass
         return d
 
     def get_public_key(self):
