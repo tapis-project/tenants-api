@@ -122,7 +122,7 @@ def ensure_master_tenant_present():
         # the master tenant
         add_tenant(tenant_id='master',
                    base_url=base_url,
-                   is_owned_by_associate_site=True,
+                   is_owned_by_associate_site=False,
                    allowable_x_tenant_ids=allowable_x_tenant_ids,
                    token_service=f'{base_url}/v3/tokens',
                    security_kernel=f'{base_url}/v3/security',
@@ -151,7 +151,7 @@ def ensure_dev_tenant_present():
     # add the dev ldap
     try:
         add_ldap(ldap_id="tapis-dev",
-                 url="ldap://ldap",
+                 url="ldap://authenticator-ldap",
                  port=389,
                  use_ssl=False,
                  user_dn="ou=tenants.dev,dc=tapis",
@@ -167,7 +167,7 @@ def ensure_dev_tenant_present():
         # the dev tenant
         add_tenant(tenant_id='dev',
                    base_url=base_url,
-                   is_owned_by_associate_site=True,
+                   is_owned_by_associate_site=False,
                    allowable_x_tenant_ids=['dev'],
                    token_service=f'{base_url}/v3/tokens',
                    security_kernel=f'{base_url}/v3/security',
