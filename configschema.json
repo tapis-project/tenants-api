@@ -4,8 +4,22 @@
   "properties": {
     "sql_db_url": {
       "type": "string",
-      "description": "full URL, including protocol and database, to the SQL db.",
-      "default": "postgres://tenants:d3fd6pAssw0rd@postgres:5432/tenants"
+      "description": "URL to postgres db, including port and database.",
+      "default": "postgres:5432/tenants"
+    },
+    "service_tenant_base_url": {
+      "type": "string",
+      "default": "https://master.staging.tapis.io"
+    },
+    "postgres_user": {
+      "type": "string",
+      "description": "user for the SQL db.",
+      "default": "tenants"
+    },
+    "postgres_password": {
+      "type": "string",
+      "description": "password to the SQL db.",
+      "default": "d3fd6pAssw0rd"
     },
     "ensure_master_tenant": {
       "type": "boolean",
