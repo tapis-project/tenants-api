@@ -7,11 +7,67 @@ from openapi_core.wrappers.flask import FlaskOpenAPIRequest
 import sqlalchemy
 from service import db
 from common import utils, errors
-from service.models import LDAPConnection, TenantOwner, Tenant
+from service.models import LDAPConnection, TenantOwner, Tenant, Site
 
 # get the logger instance -
 from common.logs import get_logger
 logger = get_logger(__name__)
+
+
+class SitesResource(Resource):
+
+    def get(self):
+        logger.debug("top of GET /sites")
+        sites = Site.query.all()
+        return utils.ok(result=[s.serialize for s in sites], msg="Sites retrieved successfully.")
+
+    def post(self):
+        logger.debug("top of POST /sites")
+        validator = RequestValidator(utils.spec)
+        result = validator.validate(FlaskOpenAPIRequest(request))
+        if result.errors:
+            raise errors.ResourceError(msg=f'Invalid POST data: {result.errors}')
+        validated_params = result.parameters
+        validated_body = result.body
+        logger.debug(f'validated_body: {dir(validated_body)}')
+        site = Site(site_id=validated_body.site_id,
+                    primary=validated_body.primary,
+                    base_url=validated_body.base_url,
+                    tenant_base_url_template=validated_body.tenant_base_url_template,
+                    site_master_tenant_id=validated_body.site_master_tenant_id,
+                    services=validated_body.services)
+        db.session.add(site)
+        try:
+            db.session.commit()
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.DBAPIError) as e:
+            msg = utils.get_message_from_sql_exc(e)
+            raise errors.ResourceError(f"Invalid POST data; {msg}")
+        return utils.ok(result=site.serialize,
+                        msg="Site object created successfully.")
+
+
+class SiteResource(Resource):
+    """
+    Work with a single Site object.
+    """
+
+    def get(self, site_id):
+        logger.debug(f"top of GET /sites/{site_id}")
+        site = Site.query.filter_by(site_id=site_id).first()
+        if not site:
+            raise errors.ResourceError(msg=f'No site found with site_id {site_id}.')
+        return utils.ok(result=site.serialize, msg='Site retrieved successfully.')
+
+    def delete(self, site_id):
+        logger.debug(f"top of DELETE /sites/{site_id}")
+        tenant = Tenant.query.filter_by(tenant_id=site_id).first()
+        if not tenant:
+            logger.debug(f"Did not find a site with id {site_id}. Returning an error.")
+            raise errors.ResourceError(msg=f'No site found with site_id {site_id}.')
+        logger.debug("site found; issuing delete and commit.")
+        db.session.delete(tenant)
+        db.session.commit()
+        return utils.ok(result=None, msg=f'Site {site_id} deleted successfully.')
 
 
 class LDAPsResource(Resource):
@@ -196,7 +252,7 @@ class TenantsResource(Resource):
         tenant = Tenant(tenant_id=validated_body.tenant_id,
                         base_url=validated_body.base_url,
                         is_owned_by_associate_site=validated_body.is_owned_by_associate_site,
-                        allowable_x_tenant_ids=validated_body.allowable_x_tenant_ids,
+                        site_id=validated_body.site_id,
                         token_service=validated_body.token_service,
                         security_kernel=validated_body.security_kernel,
                         authenticator=validated_body.authenticator,
@@ -241,4 +297,3 @@ class TenantResource(Resource):
         db.session.delete(tenant)
         db.session.commit()
         return utils.ok(result=None, msg=f'Tenant {tenant_id} deleted successfully.')
-

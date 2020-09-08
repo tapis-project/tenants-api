@@ -5,12 +5,13 @@ from flask_migrate import Migrate
 from service import app
 from service.auth import authn_and_authz
 from service.controllers import LDAPsResource, LDAPResource, OwnersResource, OwnerResource, TenantsResource, \
-    TenantResource
+    TenantResource, SitesResource, SiteResource
 
 # authentication and authorization ---
 @app.before_request
 def authnz_for_authenticator():
     authn_and_authz()
+
 
 # flask restful API object ----
 api = TapisApi(app, errors=flask_errors_dict)
@@ -20,7 +21,12 @@ api.handle_error = handle_error
 api.handle_exception = handle_error
 api.handle_user_exception = handle_error
 
-# Add resources
+# Site Resources
+api.add_resource(SitesResource, '/v3/sites')
+api.add_resource(SiteResource, '/v3/sites/<site_id>')
+
+
+
 api.add_resource(LDAPsResource, '/v3/tenants/ldaps')
 api.add_resource(LDAPResource, '/v3/tenants/ldaps/<ldap_id>')
 

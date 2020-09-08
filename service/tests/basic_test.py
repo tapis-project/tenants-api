@@ -65,7 +65,7 @@ def init_db():
             tenant_id='dev',
             base_url='https://dev.develop.tapis.io',
             is_owned_by_associate_site=False,
-            allowable_x_tenant_ids=['test'],
+            site_id='tacc',
             token_service='https://dev.develop.tapis.io/v3/tokens',
             authenticator='test-authenticator',
             security_kernel='https://dev.develop.tapis.io/v3/security',
@@ -83,7 +83,7 @@ def init_db():
             tenant_id='master',
             base_url='https://master.develop.tapis.io',
             is_owned_by_associate_site=False,
-            allowable_x_tenant_ids=['master', 'test'],
+            site_id='tacc',
             token_service='https://master.develop.tapis.io/v3/tokens',
             authenticator='test-authenticator',
             security_kernel='https://master.develop.tapis.io/v3/security',
@@ -124,7 +124,7 @@ def test_add_tenant_with_post(client, init_db):
             "owner": "jlooney@tacc.utexas.edu",
             "is_owned_by_associate_site": False,
             "authenticator": "test",
-            "allowable_x_tenant_ids": ["dev", "tacc"],
+            "site_id": "tacc",
             "service_ldap_connection_id": "tacc.test.service",
             "user_ldap_connection_id": "tacc.test.user",
             "description": "Test tenant for all TACC users."
@@ -153,7 +153,7 @@ def test_add_tenant_without_optional_fields(client, init_db):
             "owner": "jlooney@tacc.utexas.edu",
             "is_owned_by_associate_site": False,
             "authenticator": "https://test-dev.develop.tapis.io/foobar/oauth",
-            "allowable_x_tenant_ids": ["test-dev"],
+            "site_id": "tacc",
         }
         headers = {
             "X-Tapis-Token": conf.test_jwt
@@ -180,7 +180,7 @@ def test_list_tenants(client, init_db):
             assert 'token_service' in tenant
             assert 'security_kernel' in tenant
             assert 'authenticator' in tenant
-            assert 'allowable_x_tenant_ids' in tenant
+            assert 'site_id' in tenant
 
 
 def test_get_single_tenant(client, init_db):
@@ -191,6 +191,7 @@ def test_get_single_tenant(client, init_db):
 
 def test_delete_single_tenant(client, init_db):
     with client:
+        # import pdb; pdb.set_trace()
         headers = {
             "X-Tapis-Token": conf.test_jwt
         }

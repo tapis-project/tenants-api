@@ -196,7 +196,7 @@ Now that we have an owner and LDAP objects created, we are ready to create our T
 tenant.
 
 ```
-$ curl -H "X-Tapis-Token: $jwt" localhost:5000/v3/tenants -H "content-type: application/json" -d '{"tenant_id":"tacc", "base_url": "https://api.tacc.utexas.edu", "token_service": "https://api.tacc.utexas.edu/v3/token", "security_kernel": "https://api.tacc.utexas.edu/v3/security", "owner": "jstubbs@tacc.utexas.edu", "service_ldap_connection_id": "tacc.prod.service", "user_ldap_connection_id": "tacc-all", "description": "Production tenant for all TACC users.", "is_owned_by_associate_site": true, "allowable_x_tenant_ids": ["tacc"], "authenticator": "https://api.tacc.utexas.edu/v3/oauth2"}'
+$ curl -H "X-Tapis-Token: $jwt" localhost:5000/v3/tenants -H "content-type: application/json" -d '{"tenant_id":"tacc", "base_url": "https://api.tacc.utexas.edu", "token_service": "https://api.tacc.utexas.edu/v3/token", "security_kernel": "https://api.tacc.utexas.edu/v3/security", "owner": "jstubbs@tacc.utexas.edu", "service_ldap_connection_id": "tacc.prod.service", "user_ldap_connection_id": "tacc-all", "description": "Production tenant for all TACC users.", "is_owned_by_associate_site": true, "site_id": "tacc", "authenticator": "https://api.tacc.utexas.edu/v3/oauth2"}'
 
 {
   "message": "Tenant created successfully.",
@@ -260,5 +260,5 @@ instance:
 curl -H "X-Tapis-Token: $jwt" https://dev.develop.tapis.io/v3/tenants/ldaps -H "content-type: application/json" -d '{"url":"ldaps://ldap.tacc.utexas.edu", "port": 636, "use_ssl": true, "user_dn": "ou=People,dc=tacc,dc=utexas,dc=edu", "bind_dn": "uid=ldapbind,ou=People,dc=tacc,dc=utexas,dc=edu", "bind_credential": "/tapis/tacc.prod.ldapbind", "account_type": "user", "ldap_id": "tacc-all"}'
 
 # create the tenant
-curl -H "X-Tapis-Token: $jwt" https://dev.develop.tapis.io/v3/tenants -H "content-type: application/json" -d '{"tenant_id":"tacc", "base_url": "https://tacc.develop.tapis.io", "token_service": "https://tacc.develop.tapis.io/v3/tokens", "security_kernel": "https://tacc.develop.tapis.io/v3/security", "owner": "jstubbs@tacc.utexas.edu", "user_ldap_connection_id": "tacc-all", "description": "Production tenant for all TACC users.", "is_owned_by_associate_site": true, "allowable_x_tenant_ids": ["tacc"], "authenticator": "https://tacc.develop.tapis.io/v3/oauth2"}'
+curl -H "X-Tapis-Token: $jwt" https://dev.develop.tapis.io/v3/tenants -H "content-type: application/json" -d '{"tenant_id":"tacc", "base_url": "https://tacc.develop.tapis.io", "token_service": "https://tacc.develop.tapis.io/v3/tokens", "security_kernel": "https://tacc.develop.tapis.io/v3/security", "owner": "jstubbs@tacc.utexas.edu", "user_ldap_connection_id": "tacc-all", "description": "Production tenant for all TACC users.", "is_owned_by_associate_site": true, "site_id": "tacc", "authenticator": "https://tacc.develop.tapis.io/v3/oauth2"}'
 ```

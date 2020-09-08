@@ -10,6 +10,31 @@ from common.logs import get_logger
 logger = get_logger(__name__)
 
 
+class Site(db.Model):
+    __tablename__ = 'site'
+    site_id = db.Column(db.String, primary_key=True)
+    primary = db.Column(db.Boolean, nullable=False)
+
+    # only needs to be set if primary=True
+    base_url = db.Column(db.String, nullable=True, unique=True)
+
+    tenant_base_url_template = db.Column(db.String, nullable=True, unique=True)
+    site_master_tenant_id = db.Column(db.String, nullable=False)
+    services = db.Column(ARRAY(db.String(50)), unique=False, nullable=False)
+
+    def __repr__(self):
+        return f'{self.site_id}'
+
+    @property
+    def serialize(self):
+        return {
+            "site_id": self.site_id,
+            "tenant_base_url_template": self.tenant_base_url_template,
+            "institution": self.institution,
+            "services": self.services,
+        }
+
+
 class TenantOwner(db.Model):
     __tablename__ = 'tenantOwners'
     id = db.Column(db.Integer, primary_key=True)
@@ -18,7 +43,6 @@ class TenantOwner(db.Model):
     institution = db.Column(db.String(80), unique=False, nullable=False)
     create_time = db.Column(db.DateTime, nullable=False)
     last_update_time = db.Column(db.DateTime, default=datetime.datetime.utcnow, nullable=False)
-
 
     def __repr__(self):
         return f'{self.email}, {self.institution}'
@@ -115,15 +139,13 @@ def ensure_master_tenant_present():
         db.session.rollback()
     # use the base URL configured for this Tenants API service.
     base_url = conf.service_tenant_base_url
-    allowable_x_tenant_ids = ['master']
-    if conf.ensure_dev_tenant:
-        allowable_x_tenant_ids.append('dev')
+    site_id = 'tacc'
     try:
         # the master tenant
         add_tenant(tenant_id='master',
                    base_url=base_url,
                    is_owned_by_associate_site=False,
-                   allowable_x_tenant_ids=allowable_x_tenant_ids,
+                   site_id=site_id,
                    token_service=f'{base_url}/v3/tokens',
                    security_kernel=f'{base_url}/v3/security',
                    authenticator=f'{base_url}/v3/oauth2',
@@ -168,7 +190,7 @@ def ensure_dev_tenant_present():
         add_tenant(tenant_id='dev',
                    base_url=base_url,
                    is_owned_by_associate_site=False,
-                   allowable_x_tenant_ids=['dev'],
+                   site_id='tacc',
                    token_service=f'{base_url}/v3/tokens',
                    security_kernel=f'{base_url}/v3/security',
                    authenticator=f'{base_url}/v3/oauth2',
@@ -219,7 +241,7 @@ def add_ldap(ldap_id, account_type, bind_credential, bind_dn, port, url, use_ssl
 def add_tenant(tenant_id,
                base_url,
                is_owned_by_associate_site,
-               allowable_x_tenant_ids,
+               site_id,
                token_service,
                security_kernel,
                authenticator,
@@ -234,7 +256,7 @@ def add_tenant(tenant_id,
     tenant = Tenant(tenant_id=tenant_id,
                         base_url=base_url,
                         is_owned_by_associate_site=is_owned_by_associate_site,
-                        allowable_x_tenant_ids=allowable_x_tenant_ids,
+                        site_id=site_id,
                         token_service=token_service,
                         security_kernel=security_kernel,
                         authenticator=authenticator,
@@ -254,7 +276,7 @@ class Tenant(db.Model):
     tenant_id = db.Column(db.String(50), unique=True, nullable=False)
     base_url = db.Column(db.String(2000), unique=True, nullable=False)
     is_owned_by_associate_site = db.Column(db.Boolean, unique=False, nullable=False)
-    allowable_x_tenant_ids = db.Column(ARRAY(db.String(50)), unique=False, nullable=False)
+    site_id = db.Column(db.String(50), primary_key=False, nullable=False)
     token_service = db.Column(db.String(2000), unique=False, nullable=False)
     security_kernel = db.Column(db.String(2000), unique=False, nullable=False)
     authenticator = db.Column(db.String(2000), unique=False, nullable=False)
@@ -276,7 +298,7 @@ class Tenant(db.Model):
             'tenant_id': self.tenant_id,
             'base_url': self.base_url,
             'is_owned_by_associate_site': self.is_owned_by_associate_site,
-            'allowable_x_tenant_ids': self.allowable_x_tenant_ids,
+            'site_id': self.site_id,
             'token_service': self.token_service,
             'security_kernel': self.security_kernel,
             'authenticator': self.authenticator,

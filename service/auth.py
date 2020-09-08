@@ -3,7 +3,6 @@ from flask import g, request
 from common import auth
 from common.config import conf
 from common import errors as common_errors
-from tapy.dyna import DynaTapy
 
 # get the logger instance -
 from common.logs import get_logger
@@ -49,7 +48,7 @@ ROLE = 'tenant_creator'
 # will validate the service password with SK). We do not want this to break the Tenants initialization; instead,
 # we check for a 'dummy' JWT later, when checking authorization of a state-changing request to Tenants, and only
 # then do we attempt to get a token.
-t = auth.get_service_tapy_client(jwt='dummy')
+t = auth.get_service_tapis_client(jwt='dummy')
 
 def authorization():
     """

@@ -26,7 +26,7 @@ build.test:
 build: build.api build.migrations build.test
 
 # ----- run tests; this will initially wipe the local installation
-test: build clean init_dbs migrate.upgrade
+test: build clean  init_dbs  migrate.upgrade
 	cd $(cwd); touch service.log; chmod a+w; docker-compose run $(api)-tests;
 
 # ----- shutdown the currently running services
