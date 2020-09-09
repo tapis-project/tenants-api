@@ -49,9 +49,9 @@ Docker container with the volume created, and creates the initial (empty) databa
 3. Add the migrations:
 
 ```
-docker run -it --rm --entrypoint=bash --network=tenants-api_tenants -v $(pwd):/home/tapis/mig tapis/tenants-api
+docker-compose run tenants bash
   # inside the container:
-  $ cd mig; flask db init
+  $ flask db init
   $ flask db migrate
   $ flask db upgrade
   $ exit
@@ -220,6 +220,26 @@ $ curl -H "X-Tapis-Token: $jwt" localhost:5000/v3/tenants -H "content-type: appl
 ```
 Listing and retrieving tenants works just like in the case of owners and LDAP objects.
 
+### Work with Sites
+
+Here is an example of creating a site.
+
+```
+curl -H "X-Tapis-Token: $jwt" localhost:5000/v3/sites -H "content-type: application/json" -d '{"site_id":"tacc", "primary": True, "base_url": "https://api.tacc.utexas.edu", "tenant_base_url_template": "https://api.tacc.utexas.edu", "site_master_tenant_id": "dev", "services": ["tokens", "tenants"]}'
+
+{
+  "message":"Site object created successfully.",
+  "result":{
+    "base_url":"https://api.tacc.utexas.edu",
+    "primary":true,"services":["tokens","tenants"],
+    "site_id":"tacc",
+    "site_master_tenant_id":"dev",
+    "tenant_base_url_template":"https://api.tacc.utexas.edu"},
+    "status":"success",
+    "version":"dev"
+}
+
+```
 
 ### Beyond the Quickstart
 

@@ -29,9 +29,11 @@ class Site(db.Model):
     def serialize(self):
         return {
             "site_id": self.site_id,
+            "primary": self.primary,
+            "base_url": self.base_url,
             "tenant_base_url_template": self.tenant_base_url_template,
-            "institution": self.institution,
-            "services": self.services,
+            "site_master_tenant_id": self.site_master_tenant_id,
+            "services": self.services
         }
 
 
