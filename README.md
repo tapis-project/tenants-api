@@ -60,14 +60,14 @@ docker run -it --rm --entrypoint=bash --network=tenants-api_tenants -v $(pwd):/h
 ### Quickstart
 Use any HTTP client to interact with the running API. The following examples use `curl`.
 
-There are three primary collections supported by this API - `/tenants`, `/tenants/owners`, and `/tenants/ldaps`.
+There are four primary collections supported by this API - `/sites`, `/tenants`, `/tenants/owners`, and `/tenants/ldaps`.
 Creating a tenant requires references to an owner object and (optionally) an LDAP object.
 
 To illustrate, we will register the TACC production tenant. We first begin by creating an owner
 for our tenant.
 
 **Note**: Creating, modifying or deleting any of the objects requires a valid Tapis JWT. In the examples
-below, we assume a valid JWT has been exported to the `jwt` variable.
+below, we assume a valid JWT has been exported to the `jwt` variable. 
   
 #### Work With Owners
 Owners have three fields, all required: `name`, `email`, and `institution`. We can create an 
