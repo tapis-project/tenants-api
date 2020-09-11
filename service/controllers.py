@@ -25,17 +25,44 @@ class SitesResource(Resource):
         logger.debug("top of POST /sites")
         validator = RequestValidator(utils.spec)
         result = validator.validate(FlaskOpenAPIRequest(request))
+        logger.debug(f"just got result {result.parameters}")
         if result.errors:
+            logger.debug(f"error in results!!!!!!!!")
             raise errors.ResourceError(msg=f'Invalid POST data: {result.errors}')
         validated_params = result.parameters
+        logger.debug('got validated params')
         validated_body = result.body
-        logger.debug(f'validated_body: {dir(validated_body)}')
-        site = Site(site_id=validated_body.site_id,
-                    primary=validated_body.primary,
-                    base_url=validated_body.base_url,
-                    tenant_base_url_template=validated_body.tenant_base_url_template,
-                    site_master_tenant_id=validated_body.site_master_tenant_id,
-                    services=validated_body.services)
+        logger.debug('got validated body')
+
+        logger.debug(validated_body.primary and validated_body.base_url is not None)
+        try:
+            if validated_body.primary and validated_body.base_url is not None and validated_body.tenant_base_url_template is not None:
+                logger.debug('checking if primary')
+                primary_site = Site.query.filter_by(primary=True).first()
+                if primary_site:
+                    raise errors.ResourceError("A primary site already exists.")
+                else:
+                    site = Site(site_id=validated_body.site_id,
+                                primary=validated_body.primary,
+                                base_url=validated_body.base_url,
+                                tenant_base_url_template=validated_body.tenant_base_url_template,
+                                site_master_tenant_id=validated_body.site_master_tenant_id,
+                                services=validated_body.services)
+            elif validated_body.primary and validated_body.base_url is None:
+                logger.debug('checking if primary but no base url provided')
+                raise errors.ResourceError(f"Invalid POST data")
+            else:
+                logger.debug(f'not primary, creating site {validated_body.tenant_base_url_template}')
+                site = Site(site_id=validated_body.site_id,
+                            primary=False,
+                            tenant_base_url_template=validated_body.tenant_base_url_template,
+                            site_master_tenant_id=validated_body.site_master_tenant_id,
+                            services=validated_body.services)
+
+            logger.debug(f'validated_body: {dir(validated_body)}')
+        except Exception as e:
+            raise errors.ResourceError(f"Invalid POST data; {e}")
+
         db.session.add(site)
         try:
             db.session.commit()

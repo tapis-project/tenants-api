@@ -39,7 +39,7 @@ def upgrade():
     sa.Column('base_url', sa.String(), nullable=True),
     sa.Column('tenant_base_url_template', sa.String(), nullable=True),
     sa.Column('site_master_tenant_id', sa.String(), nullable=False),
-    sa.Column('services', sa.ARRAY(sa.String(length=50)), nullable=False),
+    sa.Column('services', sa.ARRAY(sa.String()), nullable=False),
     sa.PrimaryKeyConstraint('site_id'),
     sa.UniqueConstraint('base_url'),
     sa.UniqueConstraint('tenant_base_url_template')

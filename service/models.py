@@ -13,14 +13,14 @@ logger = get_logger(__name__)
 class Site(db.Model):
     __tablename__ = 'site'
     site_id = db.Column(db.String, primary_key=True)
-    primary = db.Column(db.Boolean, nullable=False)
+    primary = db.Column(db.Boolean, nullable=False, default=False)
 
     # only needs to be set if primary=True
     base_url = db.Column(db.String, nullable=True, unique=True)
 
     tenant_base_url_template = db.Column(db.String, nullable=True, unique=True)
     site_master_tenant_id = db.Column(db.String, nullable=False)
-    services = db.Column(ARRAY(db.String(50)), unique=False, nullable=False)
+    services = db.Column(ARRAY(db.String), unique=False, nullable=False)
 
     def __repr__(self):
         return f'{self.site_id}'
@@ -122,11 +122,34 @@ def get_tenants():
         return []
 
 
+def ensure_primary_site_present():
+    """
+        Ensure the dev tenant is registered in the local db.
+        :return:
+        """
+    existing_primary = Site.query.filter_by(primary=True).first()
+    if existing_primary:
+        # a primary site already exists, we don't need to make one
+        return
+    try:
+        add_primary_site(site_id='tacc',
+                         base_url='https://tapis.io',
+                         tenant_base_url_template='https://${tenant_id}.tapis.io',
+                         services=['systems', 'files', 'security', 'tokens', 'streams', 'authenticator', 'meta', 'actors'])
+
+    except Exception as e:
+        logger.error(f'Got exception trying to add the primary site. e: {e}')
+        # we have to swallow this exception as well because it is possible this code is running from within the
+        # migrations container before the migrations have tun to create the table.
+        db.session.rollback()
+
+
 def ensure_master_tenant_present():
     """
     Ensure the master tenant is registered in the local db.
     :return: 
     """
+    ensure_primary_site_present()
     # if the master tenant is already registered, just escape 0
     tenants = get_tenants()
     for tenant in tenants:
@@ -167,6 +190,7 @@ def ensure_dev_tenant_present():
     Ensure the dev tenant is registered in the local db.
     :return:
     """
+    ensure_primary_site_present()
     tenants = get_tenants()
     for tenant in tenants:
         if tenant.get('tenant_id') == 'dev':
@@ -239,6 +263,25 @@ def add_ldap(ldap_id, account_type, bind_credential, bind_dn, port, url, use_ssl
     db.session.add(ldap)
     db.session.commit()
 
+def add_primary_site(site_id,
+                     base_url,
+                     tenant_base_url_template,
+                     site_master_tenant_id,
+                     services):
+    """
+    Convenience function for adding the (one and only) primary site directly to the db.
+    :return:
+    """
+
+    site = Site(site_id=site_id,
+                base_url=base_url,
+                primary=True,
+                tenant_base_url_template=tenant_base_url_template,
+                site_master_tenant_id=site_master_tenant_id,
+                services=services)
+    db.session.add(site)
+    db.session.commit()
+
 
 def add_tenant(tenant_id,
                base_url,
@@ -252,7 +295,7 @@ def add_tenant(tenant_id,
                user_ldap_connection_id,
                description):
     """
-    Convenience function fot adding a tenant directly to the db.
+    Convenience function for adding a tenant directly to the db.
     :return:
     """
     tenant = Tenant(tenant_id=tenant_id,
