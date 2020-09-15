@@ -695,6 +695,7 @@ components:
         site_master_tenant_id:
           type: string
           description: Tenant ID of this site's tenant.
+      required: [site_id, services, site_master_tenant_id]
 
     arrayOfSites:
       type: array
