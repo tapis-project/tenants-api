@@ -127,10 +127,12 @@ def ensure_primary_site_present():
         Ensure the dev tenant is registered in the local db.
         :return:
         """
+    logger.debug("top of ensure_primary_site_present")
     try:
         existing_primary = Site.query.filter_by(primary=True).first()
         if existing_primary:
         # a primary site already exists, we don't need to make one
+            logger.debug("a primary site already exists; escaping.")
             return
     except Exception as e:
         logger.debug('no existing primary')
@@ -138,6 +140,7 @@ def ensure_primary_site_present():
         add_primary_site(site_id='tacc',
                          base_url='https://tapis.io',
                          tenant_base_url_template='https://${tenant_id}.tapis.io',
+                         site_master_tenant_id='master',
                          services=['systems', 'files', 'security', 'tokens', 'streams', 'authenticator', 'meta', 'actors'])
 
     except Exception as e:

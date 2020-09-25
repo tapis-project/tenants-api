@@ -32,43 +32,44 @@ class SitesResource(Resource):
         validated_params = result.parameters
         logger.debug('got validated params')
         validated_body = result.body
-        logger.debug('got validated body')
-
-        logger.debug(validated_body.primary and validated_body.base_url is not None)
+        logger.debug(f'got validated body {dir(validated_body)}')
         try:
-            if validated_body.primary and validated_body.base_url is not None and validated_body.tenant_base_url_template is not None:
-                logger.debug('checking if primary')
+            # request is trying to create the primary site:
+            if validated_body.primary:
+                logger.debug('checks for primary site')
                 primary_site = Site.query.filter_by(primary=True).first()
                 if primary_site:
-                    raise errors.ResourceError("A primary site already exists.")
-                else:
-                    site = Site(site_id=validated_body.site_id,
-                                primary=validated_body.primary,
-                                base_url=validated_body.base_url,
-                                tenant_base_url_template=validated_body.tenant_base_url_template,
-                                site_master_tenant_id=validated_body.site_master_tenant_id,
-                                services=validated_body.services)
-            elif validated_body.primary and validated_body.base_url is None:
-                logger.debug('checking if primary but no base url provided')
-                raise errors.ResourceError(f"Invalid POST data")
-            else:
-                logger.debug(f'not primary, creating site {validated_body.tenant_base_url_template}')
+                    raise errors.ResourceError("Invalid site description: a primary site already exists.")
+                if not validated_body.tenant_base_url_template:
+                    raise errors.ResourceError("Invalid site description: tenant_base_url_template is required for primary site.")
                 site = Site(site_id=validated_body.site_id,
-                            primary=False,
+                            primary=validated_body.primary,
+                            base_url=validated_body.base_url,
                             tenant_base_url_template=validated_body.tenant_base_url_template,
                             site_master_tenant_id=validated_body.site_master_tenant_id,
                             services=validated_body.services)
 
-            logger.debug(f'validated_body: {dir(validated_body)}')
+            # request if for an associate site:
+            else:
+                logger.debug(f'checks for associate site.')
+                if hasattr(validated_body, 'tenant_base_url_template') and validated_body.tenant_base_url_template:
+                    raise errors.ResourceError("Invalid site description; "
+                                               "the tenant_base_url_template property only applies to primary sites.")
+                site = Site(site_id=validated_body.site_id,
+                            primary=False,
+                            base_url=validated_body.base_url,
+                            site_master_tenant_id=validated_body.site_master_tenant_id,
+                            services=validated_body.services)
+            logger.info(f'creating site {validated_body.site_id}')
         except Exception as e:
             raise errors.ResourceError(f"Invalid POST data; {e}")
-
         db.session.add(site)
         try:
             db.session.commit()
         except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.DBAPIError) as e:
             msg = utils.get_message_from_sql_exc(e)
             raise errors.ResourceError(f"Invalid POST data; {msg}")
+        logger.info(f"site {validated_body.site_id} saved in db.")
         return utils.ok(result=site.serialize,
                         msg="Site object created successfully.")
 
@@ -87,12 +88,12 @@ class SiteResource(Resource):
 
     def delete(self, site_id):
         logger.debug(f"top of DELETE /sites/{site_id}")
-        tenant = Tenant.query.filter_by(tenant_id=site_id).first()
-        if not tenant:
+        site = Site.query.filter_by(site_id=site_id).first()
+        if not site:
             logger.debug(f"Did not find a site with id {site_id}. Returning an error.")
             raise errors.ResourceError(msg=f'No site found with site_id {site_id}.')
         logger.debug("site found; issuing delete and commit.")
-        db.session.delete(tenant)
+        db.session.delete(site)
         db.session.commit()
         return utils.ok(result=None, msg=f'Site {site_id} deleted successfully.')
 
@@ -245,16 +246,31 @@ class TenantsResource(Resource):
         if result.errors:
             logger.debug(f"openapi_core validattion failed. errors: {result.errors}")
             raise errors.ResourceError(msg=f'Invalid POST data: {result.errors}.')
-        logger.debug("initial openapi_core validation passed.")
-        validated_params = result.parameters
+
         validated_body = result.body
+        logger.debug(f"initial openapi_core validation passed. validated_body: {dir(validated_body)}")
 
         # check reserved words "owners" and "ldaps" -- these cannot be tenant id's:
-        if validated_body.tenant_id.lower() == 'owners':
-            raise errors.ResourceError("Invalid tenant_id; 'owners' is a reserved keyword.")
-        if validated_body.tenant_id.lower() == 'ldaps':
-            raise errors.ResourceError("Invalid tenant_id; 'ldaps' is a reserved keyword.")
-
+        try:
+            if validated_body.tenant_id.lower() == 'owners':
+                raise errors.ResourceError("Invalid tenant_id; 'owners' is a reserved keyword.")
+            if validated_body.tenant_id.lower() == 'ldaps':
+                raise errors.ResourceError("Invalid tenant_id; 'ldaps' is a reserved keyword.")
+        except Exception as e:
+            msg = f"Could not check tenant description for reserved words; Errors: {e}"
+            logger.error(msg)
+            raise errors.ResourceError(msg)
+        logger.debug("got past the reserved words check.")
+        # validate the existence of th site object:
+        try:
+            site_id = validated_body.site_id
+            site = Site.query.filter_by(site_id=site_id).first()
+        except Exception as e:
+            logger.error(f"Got exception trying to retrieve site; e: {e}")
+            raise errors.ResourceError(msg='Invalid tenant description; could not verify site_id.')
+        if not site:
+            raise errors.ResourceError(msg=f'Invalid tenant description. site {validated_body.site_id} not found.')
+        logger.debug(f"site_id {site_id} is ok.")
         # validate the existence of the ldap and owner objects:
         owner = TenantOwner.query.filter_by(email=validated_body.owner).first()
         if not owner:
