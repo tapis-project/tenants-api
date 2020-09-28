@@ -175,12 +175,14 @@ def ensure_master_tenant_present():
         # the master tenant
         add_tenant(tenant_id='master',
                    base_url=base_url,
-                   is_owned_by_associate_site=False,
                    site_id=site_id,
                    token_service=f'{base_url}/v3/tokens',
                    security_kernel=f'{base_url}/v3/security',
                    authenticator=f'{base_url}/v3/oauth2',
                    owner='CICSupport@tacc.utexas.edu',
+                   admin_user='admin',
+                   # in the master tenant, only the tokens service should have the token_generator role
+                   token_gen_services=['token'],
                    service_ldap_connection_id=None,
                    user_ldap_connection_id=None,
                    description='The master tenant.')
@@ -221,12 +223,13 @@ def ensure_dev_tenant_present():
         # the dev tenant
         add_tenant(tenant_id='dev',
                    base_url=base_url,
-                   is_owned_by_associate_site=False,
                    site_id='tacc',
                    token_service=f'{base_url}/v3/tokens',
                    security_kernel=f'{base_url}/v3/security',
                    authenticator=f'{base_url}/v3/oauth2',
                    owner='CICSupport@tacc.utexas.edu',
+                   admin_user='admin',
+                   token_gen_services=['abaco', 'authenticator'],
                    service_ldap_connection_id=None,
                    user_ldap_connection_id='tapis-dev',
                    description='The dev tenant.')
@@ -291,12 +294,13 @@ def add_primary_site(site_id,
 
 def add_tenant(tenant_id,
                base_url,
-               is_owned_by_associate_site,
                site_id,
                token_service,
                security_kernel,
                authenticator,
                owner,
+               admin_user,
+               token_gen_services,
                service_ldap_connection_id,
                user_ldap_connection_id,
                description):
@@ -306,12 +310,13 @@ def add_tenant(tenant_id,
     """
     tenant = Tenant(tenant_id=tenant_id,
                         base_url=base_url,
-                        is_owned_by_associate_site=is_owned_by_associate_site,
                         site_id=site_id,
                         token_service=token_service,
                         security_kernel=security_kernel,
                         authenticator=authenticator,
                         owner=owner,
+                        admin_user=admin_user,
+                        token_gen_services=token_gen_services,
                         service_ldap_connection_id=service_ldap_connection_id,
                         user_ldap_connection_id=user_ldap_connection_id,
                         description=description,
@@ -326,12 +331,13 @@ class Tenant(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     tenant_id = db.Column(db.String(50), unique=True, nullable=False)
     base_url = db.Column(db.String(2000), unique=True, nullable=False)
-    is_owned_by_associate_site = db.Column(db.Boolean, unique=False, nullable=False)
     site_id = db.Column(db.String(50), primary_key=False, nullable=False)
     token_service = db.Column(db.String(2000), unique=False, nullable=False)
     security_kernel = db.Column(db.String(2000), unique=False, nullable=False)
     authenticator = db.Column(db.String(2000), unique=False, nullable=False)
     owner = db.Column(db.String(120), db.ForeignKey('tenantOwners.email'), nullable=False)
+    admin_user = db.Column(db.String(120), unique=True, nullable=False)
+    token_gen_services = db.Column(ARRAY(db.String), unique=False, nullable=False)
     create_time = db.Column(db.DateTime, nullable=False)
     last_update_time = db.Column(db.DateTime, default=datetime.datetime.utcnow, nullable=False)
 
@@ -348,19 +354,19 @@ class Tenant(db.Model):
         d = {
             'tenant_id': self.tenant_id,
             'base_url': self.base_url,
-            'is_owned_by_associate_site': self.is_owned_by_associate_site,
             'site_id': self.site_id,
             'token_service': self.token_service,
             'security_kernel': self.security_kernel,
             'authenticator': self.authenticator,
             'owner': self.owner,
+            'admin_user': self.admin_user,
+            'token_gen_services': self.token_gen_services,
             'service_ldap_connection_id': self.service_ldap_connection_id,
             'user_ldap_connection_id': self.user_ldap_connection_id,
             'public_key': self.get_public_key(),
             'description': self.description,
             "create_time": self.create_time,
             "last_update_time": self.last_update_time,
-
         }
         # the following code references the the flask thread-local object, g, but this will throw a runtime error
         # if executed outside of the application context. that will happen at service initialization when

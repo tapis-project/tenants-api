@@ -2,12 +2,17 @@
 
 version: "3.5"
 
+
 networks:
     tenants:
         driver: bridge
 
+
 volumes:
     pgdata:
+
+    pgadmindata:
+
 
 services:
     postgres:
@@ -46,3 +51,17 @@ services:
             - tenants
         volumes:
             - ./config-local.json:/home/tapis/config.json
+
+    pgadmin:
+        image: dpage/pgadmin4
+        environment:
+          PGADMIN_DEFAULT_EMAIL: "admin@test.com"
+          PGADMIN_DEFAULT_PASSWORD: "password"
+        ports:
+            - "8000:80"
+        networks:
+            - tenants
+        depends_on:
+          - postgres
+        volumes:
+            - pgadmindata:/var/lib/pgadmin

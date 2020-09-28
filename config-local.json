@@ -1,5 +1,6 @@
 {
   "service_name": "tenants",
+  "service_password": "7P706qzmZ9BygUGiqOJ7lXA",
   "tenants": ["*"],
   "use_sk": false,
   "log_level": "DEBUG",

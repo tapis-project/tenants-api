@@ -43,6 +43,23 @@ During initial development, the database schema can be in flux. Changes to the m
 adding additional migration versions, the database and associated `migrations` directory can be "wiped" and recreated
 from the new models code using the following steps:
 
+1. mv migrations migrations.bak
+2. mkdir migrations
+3. make build
+4. make init_dbs
+5. docker-compose run tenants bash
+  # inside the container:
+  $ flask db init
+  $ flask db migrate
+  $ flask db upgrade
+6. from back outside the container, copy migrations files back to host:
+docker cp 5894f5f1fded:/home/tapis/migrations/script.py.mako migrations/
+docker cp 5894f5f1fded:/home/tapis/migrations/env.py migrations/
+docker cp 5894f5f1fded:/home/tapis/migrations/alembic.ini migrations/
+docker cp 5894f5f1fded:/home/tapis/migrations/versions migrations/
+docker cp 5894f5f1fded:/home/tapis/migrations/README migrations/
+
+
 1. `make wipe` - removes the database and API container, database volume, and the `migrations` directory.database
 2. `make init_dbs` - creates a new docker volume, `tenant-api_pgdata`, creates a new Postrgres
 Docker container with the volume created, and creates the initial (empty) database and database user.
@@ -61,13 +78,25 @@ docker-compose run tenants bash
 Use any HTTP client to interact with the running API. The following examples use `curl`.
 
 There are four primary collections supported by this API - `/sites`, `/tenants`, `/tenants/owners`, and `/tenants/ldaps`.
-Creating a tenant requires references to an owner object and (optionally) an LDAP object.
+Creating a tenant requires references to aa site object, an owner object and (optionally) an LDAP object.
 
 To illustrate, we will register the TACC production tenant. We first begin by creating an owner
 for our tenant.
 
 **Note**: Creating, modifying or deleting any of the objects requires a valid Tapis JWT. In the examples
-below, we assume a valid JWT has been exported to the `jwt` variable. 
+below, we assume a valid JWT has been exported to the `jwt` variable. For example,
+
+```
+$ curl -u "tenants:<pass>" -H "Content-type: application/json" -d '{"token_tenant_id": "master", "account_type": "service", "token_username": "tenants", "access_token_ttl": 99999999}'  https://master.develop.tapis.io/v3/tokens
+```
+
+#### Get an Authorized JWT
+The current version of the Tenants API relies on the SK to check authorization when adding or modifying records in the
+Tenants API. A local development instance of the API will, by default, use the develop instance of the SK, so one should
+start by generating a service token for the tenants user in the Tapis kubernetes develop instance.  
+
+#### Work With Sites
+
   
 #### Work With Owners
 Owners have three fields, all required: `name`, `email`, and `institution`. We can create an 
