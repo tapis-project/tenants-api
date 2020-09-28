@@ -563,9 +563,6 @@ components:
         base_url:
           type: string
           description: The base URL for the tenant.
-        is_owned_by_associate_site:
-          type: boolean
-          description: Whether the tenant is hosted by an associate site.
         site_id:
           type: string
           description: The site for which the tenant belongs.
@@ -581,6 +578,15 @@ components:
         owner:
           type: string
           description: The email address of the primary owner and contact for the tenant.
+        admin_user:
+          type: string
+          description: The username of the user that is automatically assigned the tenant_admin role by the Security Kernel.
+        token_gen_services:
+          type: array
+          items:
+            type: string
+            pattern: "^[a-zA-Z0-9-]*$"
+          description: The list of services that are automatically granted the token_generator role for this tenant by the Security Kernel.
         service_ldap_connection_id:
           type: string
           description: The unique identifier for the LDAP object for service accounts in the tenant.
@@ -590,7 +596,7 @@ components:
         description:
           type: string
           description: A description of the tenant.
-      required: [tenant_id, base_url, is_owned_by_associate_site, site_id, token_service, security_kernel, authenticator, owner]
+      required: [tenant_id, base_url, site_id, token_service, security_kernel, authenticator, owner, admin_user, token_gen_services]
 
     Tenant:
       type: object
@@ -620,6 +626,15 @@ components:
         owner:
           type: string
           description: The email address of the primary owner and contact for the tenant.
+        admin_user:
+          type: string
+          description: The username of the user that is automatically assigned the tenant_admin role by the Security Kernel.
+        token_gen_services:
+          type: array
+          items:
+            type: string
+            pattern: "^[a-zA-Z0-9-]*$"
+          description: The list of services that are automatically granted the token_generator role for this tenant by the Security Kernel.
         service_ldap_connection_id:
           type: string
           description: The unique identifier for the LDAP object for service accounts in the tenant.
