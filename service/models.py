@@ -336,7 +336,7 @@ class Tenant(db.Model):
     security_kernel = db.Column(db.String(2000), unique=False, nullable=False)
     authenticator = db.Column(db.String(2000), unique=False, nullable=False)
     owner = db.Column(db.String(120), db.ForeignKey('tenantOwners.email'), nullable=False)
-    admin_user = db.Column(db.String(120), unique=True, nullable=False)
+    admin_user = db.Column(db.String(120), unique=False, nullable=False)
     token_gen_services = db.Column(ARRAY(db.String), unique=False, nullable=False)
     create_time = db.Column(db.DateTime, nullable=False)
     last_update_time = db.Column(db.DateTime, default=datetime.datetime.utcnow, nullable=False)

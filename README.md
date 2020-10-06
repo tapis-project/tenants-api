@@ -53,11 +53,12 @@ from the new models code using the following steps:
   $ flask db migrate
   $ flask db upgrade
 6. from back outside the container, copy migrations files back to host:
-docker cp 5894f5f1fded:/home/tapis/migrations/script.py.mako migrations/
-docker cp 5894f5f1fded:/home/tapis/migrations/env.py migrations/
-docker cp 5894f5f1fded:/home/tapis/migrations/alembic.ini migrations/
-docker cp 5894f5f1fded:/home/tapis/migrations/versions migrations/
-docker cp 5894f5f1fded:/home/tapis/migrations/README migrations/
+
+docker cp $cid:/home/tapis/migrations/script.py.mako migrations/
+docker cp $cid:/home/tapis/migrations/env.py migrations/
+docker cp $cid:/home/tapis/migrations/alembic.ini migrations/
+docker cp $cid:/home/tapis/migrations/versions migrations/
+docker cp $cid:/home/tapis/migrations/README migrations/
 
 
 1. `make wipe` - removes the database and API container, database volume, and the `migrations` directory.database
