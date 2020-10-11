@@ -4,6 +4,8 @@ from common import auth
 from common.config import conf
 from common import errors as common_errors
 
+from service.models import get_sites, get_tenants
+
 # get the logger instance -
 from common.logs import get_logger
 logger = get_logger(__name__)
@@ -48,7 +50,21 @@ ROLE = 'tenant_creator'
 # will validate the service password with SK). We do not want this to break the Tenants initialization; instead,
 # we check for a 'dummy' JWT later, when checking authorization of a state-changing request to Tenants, and only
 # then do we attempt to get a token.
-t = auth.get_service_tapis_client(jwt='dummy')
+
+# the tenants api always runs at the primary site; therefore, we can determine this service's tenant_id -- it is the
+# master tenant id for the primary site.
+sites = get_sites()
+tenants = get_tenants()
+logger.info(f"Sites: {sites}")
+logger.info(f"Tenants: {tenants}")
+primary_site_master_tenant_id = None
+for s in sites:
+    if s.get('primary'):
+        primary_site_master_tenant_id = s.get('site_master_tenant_id')
+        logger.debug(f"found prinary site; site_id: {s.get('site_id')}; master tenant_id: {primary_site_master_tenant_id}")
+if not primary_site_master_tenant_id:
+    raise common_errors.ResourceError('Could not find tenant_id for the primary site. Aborting.')
+t = auth.get_service_tapis_client(tenant_id=primary_site_master_tenant_id, jwt='dummy')
 
 def authorization():
     """
