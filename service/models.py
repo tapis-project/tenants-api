@@ -122,6 +122,21 @@ def get_tenants():
         return []
 
 
+def get_sites():
+    """
+    Convenience function to return the list of sites in the db.
+    :return: (list[dict]) List of site descriptions.
+    """
+    try:
+        sites = Site.query.all()
+        return [s.serialize for s in sites]
+    except Exception as e:
+        logger.info(f"WARNING - got exception trying to calculate the sites; this better be the migration code "
+                    f"running. exception: {e}")
+        db.session.rollback()
+        return []
+
+
 def ensure_primary_site_present():
     """
         Ensure the dev tenant is registered in the local db.
