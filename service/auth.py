@@ -62,9 +62,13 @@ for s in sites:
     if s.get('primary'):
         primary_site_master_tenant_id = s.get('site_master_tenant_id')
         logger.debug(f"found prinary site; site_id: {s.get('site_id')}; master tenant_id: {primary_site_master_tenant_id}")
-if not primary_site_master_tenant_id:
-    raise common_errors.ResourceError('Could not find tenant_id for the primary site. Aborting.')
-t = auth.get_service_tapis_client(tenant_id=primary_site_master_tenant_id, jwt='dummy')
+if primary_site_master_tenant_id:
+    t = auth.get_service_tapis_client(tenant_id=primary_site_master_tenant_id, jwt='dummy', tenants=auth.tenants)
+else:
+    t = None
+    logger.info(f'Could not find tenant_id for the primary site and was therefore not able to generate the tapis client.'
+                f' This better be migrations...')
+
 
 def authorization():
     """
@@ -91,6 +95,7 @@ def authorization():
         # try to replace with a real token:
         try:
             t.get_tokens()
+            logger.info("tenants-api has just called get_tokens().")
         except Exception as e:
             logger.info(f"Tenants could not retrieve a service token from the Tokens API; exception: {e}")
             raise common_errors.PermissionsError(msg=f'Could not retrieve service token from  the Tokens API. '
