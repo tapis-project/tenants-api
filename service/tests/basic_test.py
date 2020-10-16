@@ -152,7 +152,9 @@ def test_add_tenant_with_post(client, init_db):
             "description": "Test tenant for all TACC users."
         }
         headers = {
-            "X-Tapis-Token": conf.test_jwt
+            "X-Tapis-Token": conf.test_jwt,
+            "X-Tapis-Tenant": "master",
+            "X-Tapis-User": "tenants",
         }
         response = client.post(
             "http://localhost:5000/v3/tenants",
@@ -174,13 +176,14 @@ def test_add_tenant_without_optional_fields(client, init_db):
             "token_service": "https://test-dev.develop.tapis.io/foo/token",
             "security_kernel": "https://test-dev.develop.tapis.io/bar/security",
             "owner": "jlooney@tacc.utexas.edu",
-            #"is_owned_by_associate_site": False,
             "authenticator": "https://test-dev.develop.tapis.io/foobar/oauth",
             "site_id": "tacc",
             "token_gen_services": ["test"]
         }
         headers = {
-            "X-Tapis-Token": conf.test_jwt
+            "X-Tapis-Token": conf.test_jwt,
+            "X-Tapis-Tenant": "master",
+            "X-Tapis-User": "tenants",
         }
         response = client.post(
             "http://localhost:5000/v3/tenants",
@@ -225,13 +228,14 @@ def test_delete_single_tenant(client, init_db):
             "token_service": "https://lolidk.develop.tapis.io/foo/token",
             "security_kernel": "https://lolidk.develop.tapis.io/bar/security",
             "owner": "jlooney@tacc.utexas.edu",
-           # "is_owned_by_associate_site": False,
             "authenticator": "https://test-dev.develop.tapis.io/foobar/oauth",
             "site_id": "tacc",
             "token_gen_services": ["test"]
         }
         headers = {
-            "X-Tapis-Token": conf.test_jwt
+            "X-Tapis-Token": conf.test_jwt,
+            "X-Tapis-Tenant": "master",
+            "X-Tapis-User": "tenants",
         }
         response = client.post(
             "http://localhost:5000/v3/tenants",
@@ -243,7 +247,9 @@ def test_delete_single_tenant(client, init_db):
 
         # Now, delete the tenant we just created
         headers = {
-            "X-Tapis-Token": conf.test_jwt
+            "X-Tapis-Token": conf.test_jwt,
+            "X-Tapis-Tenant": "master",
+            "X-Tapis-User": "tenants",
         }
         response = client.delete(
             "http://localhost:5000/v3/tenants/lolidk",
@@ -268,7 +274,9 @@ def test_add_ldap_with_post(client, init_db):
         }
 
         headers = {
-            "X-Tapis-Token": conf.test_jwt
+            "X-Tapis-Token": conf.test_jwt,
+            "X-Tapis-Tenant": "master",
+            "X-Tapis-User": "tenants",
         }
         response = client.post(
             "http://localhost:5000/v3/tenants/ldaps",
@@ -339,7 +347,9 @@ def test_add_owner_with_post(client, init_db):
         "institution": "TACC"
     }
     headers = {
-        "X-Tapis-Token": conf.test_jwt
+        "X-Tapis-Token": conf.test_jwt,
+        "X-Tapis-Tenant": "master",
+        "X-Tapis-User": "tenants",
     }
     response = client.post(
         "http://localhost:5000/v3/tenants/owners",
@@ -365,7 +375,9 @@ def test_delete_single_owner(client, init_db):
     with client:
 
         headers = {
-            "X-Tapis-Token": conf.test_jwt
+            "X-Tapis-Token": conf.test_jwt,
+            "X-Tapis-Tenant": "master",
+            "X-Tapis-User": "tenants",
         }
 
         response = client.delete(
@@ -379,7 +391,9 @@ def test_delete_single_owner(client, init_db):
 def test_create_nonprimary_site(client, init_db):
     with client:
         headers = {
-            "X-Tapis-Token": conf.test_jwt
+            "X-Tapis-Token": conf.test_jwt,
+            "X-Tapis-Tenant": "master",
+            "X-Tapis-User": "tenants",
         }
 
         payload = {
@@ -405,7 +419,9 @@ def test_create_nonprimary_site(client, init_db):
 def test_cannot_create_multiple_primary_sites(client, init_db):
     with client:
         headers = {
-            "X-Tapis-Token": conf.test_jwt
+            "X-Tapis-Token": conf.test_jwt,
+            "X-Tapis-Tenant": "master",
+            "X-Tapis-User": "tenants",
         }
 
         payload = {
