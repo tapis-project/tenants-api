@@ -174,7 +174,7 @@ def test_add_tenant_without_optional_fields(client, init_db):
             "token_service": "https://test-dev.develop.tapis.io/foo/token",
             "security_kernel": "https://test-dev.develop.tapis.io/bar/security",
             "owner": "jlooney@tacc.utexas.edu",
-            "is_owned_by_associate_site": False,
+            #"is_owned_by_associate_site": False,
             "authenticator": "https://test-dev.develop.tapis.io/foobar/oauth",
             "site_id": "tacc",
             "token_gen_services": ["test"]
@@ -225,7 +225,7 @@ def test_delete_single_tenant(client, init_db):
             "token_service": "https://lolidk.develop.tapis.io/foo/token",
             "security_kernel": "https://lolidk.develop.tapis.io/bar/security",
             "owner": "jlooney@tacc.utexas.edu",
-            "is_owned_by_associate_site": False,
+           # "is_owned_by_associate_site": False,
             "authenticator": "https://test-dev.develop.tapis.io/foobar/oauth",
             "site_id": "tacc",
             "token_gen_services": ["test"]
