@@ -256,6 +256,10 @@ class TenantsResource(Resource):
                 raise errors.ResourceError("Invalid tenant_id; 'owners' is a reserved keyword.")
             if validated_body.tenant_id.lower() == 'ldaps':
                 raise errors.ResourceError("Invalid tenant_id; 'ldaps' is a reserved keyword.")
+            if validated_body.tenant_id.lower() == 'ready':
+                raise errors.ResourceError("Invalid tenant_id; 'ready' is a reserved keyword.")
+            if validated_body.tenant_id.lower() == 'hello':
+                raise errors.ResourceError("Invalid tenant_id; 'hello' is a reserved keyword.")
         except Exception as e:
             msg = f"Could not check tenant description for reserved words; Errors: {e}"
             logger.error(msg)

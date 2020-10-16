@@ -1,6 +1,6 @@
 from common.config import conf
 from common.utils import TapisApi, handle_error, flask_errors_dict
-
+from common.resources import HelloResource, ReadyResource
 from flask_migrate import Migrate
 from service import app
 from service.auth import authn_and_authz
@@ -20,6 +20,10 @@ api = TapisApi(app, errors=flask_errors_dict)
 api.handle_error = handle_error
 api.handle_exception = handle_error
 api.handle_user_exception = handle_error
+
+# Health-checks
+api.add_resource(ReadyResource, '/v3/tenants/ready')
+api.add_resource(HelloResource, '/v3/tenants/hello')
 
 # Site Resources
 api.add_resource(SitesResource, '/v3/sites')
