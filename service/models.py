@@ -151,10 +151,19 @@ def ensure_primary_site_present():
             return
     except Exception as e:
         logger.debug('no existing primary')
+    # the primary_site_master_tenant_base_url has the form
+    # https://master.develop.tapis.io OR
+    # https://master.staging.tapis.io etc..
+    # replace the "master." with "" to get the site base URL:
+    base_url = conf.primary_site_master_tenant_base_url.replace("master.", "")
+    # and replace "master" with ${tenant_id} to get the template:
+    tenant_base_url_template = conf.primary_site_master_tenant_base_url.replace("master", "${tenant_id}")
+    logger.info(f"adding primary site with base_url: {base_url} and "
+                f"tenant_base_url_template: {tenant_base_url_template}")
     try:
         add_primary_site(site_id='tacc',
-                         base_url='https://tapis.io',
-                         tenant_base_url_template='https://${tenant_id}.tapis.io',
+                         base_url=base_url,
+                         tenant_base_url_template=tenant_base_url_template,
                          site_master_tenant_id='master',
                          services=['systems', 'files', 'security', 'tokens', 'streams', 'authenticator', 'meta', 'actors'])
 
@@ -184,7 +193,7 @@ def ensure_master_tenant_present():
         # tenant.
         db.session.rollback()
     # use the base URL configured for this Tenants API service.
-    base_url = conf.service_tenant_base_url
+    base_url = conf.primary_site_master_tenant_base_url
     site_id = 'tacc'
     try:
         # the master tenant
@@ -218,7 +227,7 @@ def ensure_dev_tenant_present():
     for tenant in tenants:
         if tenant.get('tenant_id') == 'dev':
             return
-    base_url = conf.service_tenant_base_url.replace('master', 'dev')
+    base_url = conf.primary_site_master_tenant_base_url.replace('master', 'dev')
     # add the dev ldap
     try:
         add_ldap(ldap_id="tapis-dev",
