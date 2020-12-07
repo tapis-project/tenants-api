@@ -36,7 +36,7 @@ def init_db():
             primary=False,
             base_url='tacc.utexas.edu',
             tenant_base_url_template='test',
-            site_master_tenant_id='test',
+            site_admin_tenant_id='test',
             services=['test']
         )
         models.db.session.add(tacc_site)
@@ -93,14 +93,14 @@ def init_db():
 
         tenant = models.Tenant(
             id=999,
-            tenant_id='master',
-            base_url='https://master.develop.tapis.io',
+            tenant_id='admin',
+            base_url='https://admin.develop.tapis.io',
             admin_user='jlooney',
             site_id='tacc',
             token_gen_services=['test'],
-            token_service='https://master.develop.tapis.io/v3/tokens',
+            token_service='https://admin.develop.tapis.io/v3/tokens',
             authenticator='test-authenticator',
-            security_kernel='https://master.develop.tapis.io/v3/security',
+            security_kernel='https://admin.develop.tapis.io/v3/security',
             owner='cicsupport@tacc.utexas.edu',
             description='testing',
             create_time=datetime.datetime.now()
@@ -153,7 +153,7 @@ def test_add_tenant_with_post(client, init_db):
         }
         headers = {
             "X-Tapis-Token": conf.test_jwt,
-            "X-Tapis-Tenant": "master",
+            "X-Tapis-Tenant": "admin",
             "X-Tapis-User": "tenants",
         }
         response = client.post(
@@ -182,7 +182,7 @@ def test_add_tenant_without_optional_fields(client, init_db):
         }
         headers = {
             "X-Tapis-Token": conf.test_jwt,
-            "X-Tapis-Tenant": "master",
+            "X-Tapis-Tenant": "admin",
             "X-Tapis-User": "tenants",
         }
         response = client.post(
@@ -234,7 +234,7 @@ def test_delete_single_tenant(client, init_db):
         }
         headers = {
             "X-Tapis-Token": conf.test_jwt,
-            "X-Tapis-Tenant": "master",
+            "X-Tapis-Tenant": "admin",
             "X-Tapis-User": "tenants",
         }
         response = client.post(
@@ -248,7 +248,7 @@ def test_delete_single_tenant(client, init_db):
         # Now, delete the tenant we just created
         headers = {
             "X-Tapis-Token": conf.test_jwt,
-            "X-Tapis-Tenant": "master",
+            "X-Tapis-Tenant": "admin",
             "X-Tapis-User": "tenants",
         }
         response = client.delete(
@@ -275,7 +275,7 @@ def test_add_ldap_with_post(client, init_db):
 
         headers = {
             "X-Tapis-Token": conf.test_jwt,
-            "X-Tapis-Tenant": "master",
+            "X-Tapis-Tenant": "admin",
             "X-Tapis-User": "tenants",
         }
         response = client.post(
@@ -348,7 +348,7 @@ def test_add_owner_with_post(client, init_db):
     }
     headers = {
         "X-Tapis-Token": conf.test_jwt,
-        "X-Tapis-Tenant": "master",
+        "X-Tapis-Tenant": "admin",
         "X-Tapis-User": "tenants",
     }
     response = client.post(
@@ -376,7 +376,7 @@ def test_delete_single_owner(client, init_db):
 
         headers = {
             "X-Tapis-Token": conf.test_jwt,
-            "X-Tapis-Tenant": "master",
+            "X-Tapis-Tenant": "admin",
             "X-Tapis-User": "tenants",
         }
 
@@ -392,7 +392,7 @@ def test_create_nonprimary_site(client, init_db):
     with client:
         headers = {
             "X-Tapis-Token": conf.test_jwt,
-            "X-Tapis-Tenant": "master",
+            "X-Tapis-Tenant": "admin",
             "X-Tapis-User": "tenants",
         }
 
@@ -401,7 +401,7 @@ def test_create_nonprimary_site(client, init_db):
             "primary": False,
             "base_url": "test",
             "tenant_base_url": "test",
-            "site_master_tenant_id": 'dev',
+            "site_admin_tenant_id": 'dev',
             "services": ['test']
         }
 
@@ -420,7 +420,7 @@ def test_cannot_create_multiple_primary_sites(client, init_db):
     with client:
         headers = {
             "X-Tapis-Token": conf.test_jwt,
-            "X-Tapis-Tenant": "master",
+            "X-Tapis-Tenant": "admin",
             "X-Tapis-User": "tenants",
         }
 
@@ -429,7 +429,7 @@ def test_cannot_create_multiple_primary_sites(client, init_db):
             "primary": True,
             "base_url": "test",
             "tenant_base_url": "test",
-            "site_master_tenant_id": 'dev',
+            "site_admin_tenant_id": 'dev',
             "services": ['test']
         }
 

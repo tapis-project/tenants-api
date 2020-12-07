@@ -46,7 +46,7 @@ class SitesResource(Resource):
                             primary=validated_body.primary,
                             base_url=validated_body.base_url,
                             tenant_base_url_template=validated_body.tenant_base_url_template,
-                            site_master_tenant_id=validated_body.site_master_tenant_id,
+                            site_admin_tenant_id=validated_body.site_admin_tenant_id,
                             services=validated_body.services)
 
             # request if for an associate site:
@@ -58,7 +58,7 @@ class SitesResource(Resource):
                 site = Site(site_id=validated_body.site_id,
                             primary=False,
                             base_url=validated_body.base_url,
-                            site_master_tenant_id=validated_body.site_master_tenant_id,
+                            site_admin_tenant_id=validated_body.site_admin_tenant_id,
                             services=validated_body.services)
             logger.info(f'creating site {validated_body.site_id}')
         except Exception as e:

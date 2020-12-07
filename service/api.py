@@ -41,14 +41,14 @@ api.add_resource(TenantsResource, '/v3/tenants')
 api.add_resource(TenantResource, '/v3/tenants/<tenant_id>')
 
 # make sure the dev tenant is in place
-from service.models import ensure_master_tenant_present, ensure_dev_tenant_present
+from service.models import ensure_admin_tenant_present, ensure_dev_tenant_present
 
-# the dev tenant requires the presence of the master tenant.
+# the dev tenant requires the presence of the admin tenant.
 if conf.ensure_dev_tenant:
-    ensure_master_tenant_present()
+    ensure_admin_tenant_present()
     ensure_dev_tenant_present()
-elif conf.ensure_master_tenant:
-    ensure_master_tenant_present()
+elif conf.ensure_admin_tenant:
+    ensure_admin_tenant_present()
 
 
 # start the development server

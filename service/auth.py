@@ -52,18 +52,18 @@ ROLE = 'tenant_creator'
 # then do we attempt to get a token.
 
 # the tenants api always runs at the primary site; therefore, we can determine this service's tenant_id -- it is the
-# master tenant id for the primary site.
+# admin tenant id for the primary site.
 sites = get_sites()
 tenants = get_tenants()
 logger.info(f"Sites: {sites}")
 logger.info(f"Tenants: {tenants}")
-primary_site_master_tenant_id = None
+primary_site_admin_tenant_id = None
 for s in sites:
     if s.get('primary'):
-        primary_site_master_tenant_id = s.get('site_master_tenant_id')
-        logger.debug(f"found prinary site; site_id: {s.get('site_id')}; master tenant_id: {primary_site_master_tenant_id}")
-if primary_site_master_tenant_id:
-    t = auth.get_service_tapis_client(tenant_id=primary_site_master_tenant_id, jwt='dummy', tenants=auth.tenants)
+        primary_site_admin_tenant_id = s.get('site_admin_tenant_id')
+        logger.debug(f"found prinary site; site_id: {s.get('site_id')}; admin tenant_id: {primary_site_admin_tenant_id}")
+if primary_site_admin_tenant_id:
+    t = auth.get_service_tapis_client(tenant_id=primary_site_admin_tenant_id, jwt='dummy', tenants=auth.tenants)
 else:
     t = None
     logger.info(f'Could not find tenant_id for the primary site and was therefore not able to generate the tapis client.'
@@ -82,11 +82,11 @@ def authorization():
     if request.method == 'GET' or request.method == 'OPTIONS' or request.method == 'HEAD':
         logger.debug("method was GET, OPTIONS or HEAD; returning True")
         return True
-    # currently, only services in the master tenant are allowed to make changes to the tenants registry.
+    # currently, only services in the admin tenant are allowed to make changes to the tenants registry.
     # in the future, we can look at opening this up to admins within a tenant to make changes to their tenant.
     logger.debug(f"using SK; checking authorization. g.tenant_id: {g.tenant_id}; g.username: {g.username}")
-    if not g.tenant_id == 'master':
-        raise common_errors.PermissionsError(msg='Permission denied; only services in the master tenant can update the '
+    if not g.tenant_id == 'admin':
+        raise common_errors.PermissionsError(msg='Permission denied; only services in the admin tenant can update the '
                                            'tenants registry.')
 
     # at this point, we need to make a call to SK to check roles; to do that, we need a valid service JWT, so we try

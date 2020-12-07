@@ -9,7 +9,7 @@
     },
     "service_tenant_base_url": {
       "type": "string",
-      "default": "https://master.develop.tapis.io"
+      "default": "https://admin.develop.tapis.io"
     },
     "postgres_user": {
       "type": "string",
@@ -21,9 +21,9 @@
       "description": "password to the SQL db.",
       "default": "d3fd6pAssw0rd"
     },
-    "ensure_master_tenant": {
+    "ensure_admin_tenant": {
       "type": "boolean",
-      "description": "Whether to ensure the master tenant is added to the table at start up.",
+      "description": "Whether to ensure the admin tenant is added to the table at start up.",
       "default": true
     },
     "ensure_dev_tenant": {

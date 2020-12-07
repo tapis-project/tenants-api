@@ -19,7 +19,7 @@ class Site(db.Model):
     base_url = db.Column(db.String, nullable=True, unique=True)
 
     tenant_base_url_template = db.Column(db.String, nullable=True, unique=True)
-    site_master_tenant_id = db.Column(db.String, nullable=False)
+    site_admin_tenant_id = db.Column(db.String, nullable=False)
     services = db.Column(ARRAY(db.String), unique=False, nullable=False)
 
     def __repr__(self):
@@ -32,7 +32,7 @@ class Site(db.Model):
             "primary": self.primary,
             "base_url": self.base_url,
             "tenant_base_url_template": self.tenant_base_url_template,
-            "site_master_tenant_id": self.site_master_tenant_id,
+            "site_admin_tenant_id": self.site_admin_tenant_id,
             "services": self.services
         }
 
@@ -151,20 +151,20 @@ def ensure_primary_site_present():
             return
     except Exception as e:
         logger.debug('no existing primary')
-    # the primary_site_master_tenant_base_url has the form
-    # https://master.develop.tapis.io OR
-    # https://master.staging.tapis.io etc..
-    # replace the "master." with "" to get the site base URL:
-    base_url = conf.primary_site_master_tenant_base_url.replace("master.", "")
-    # and replace "master" with ${tenant_id} to get the template:
-    tenant_base_url_template = conf.primary_site_master_tenant_base_url.replace("master", "${tenant_id}")
+    # the primary_site_admin_tenant_base_url has the form
+    # https://admin.develop.tapis.io OR
+    # https://admin.staging.tapis.io etc..
+    # replace the "V." with "" to get the site base URL:
+    base_url = conf.primary_site_admin_tenant_base_url.replace("admin.", "")
+    # and replace "admin" with ${tenant_id} to get the template:
+    tenant_base_url_template = conf.primary_site_admin_tenant_base_url.replace("admin", "${tenant_id}")
     logger.info(f"adding primary site with base_url: {base_url} and "
                 f"tenant_base_url_template: {tenant_base_url_template}")
     try:
         add_primary_site(site_id='tacc',
                          base_url=base_url,
                          tenant_base_url_template=tenant_base_url_template,
-                         site_master_tenant_id='master',
+                         site_admin_tenant_id='admin',
                          services=['systems', 'files', 'security', 'tokens', 'streams', 'authenticator', 'meta', 'actors'])
 
     except Exception as e:
@@ -174,16 +174,16 @@ def ensure_primary_site_present():
         db.session.rollback()
 
 
-def ensure_master_tenant_present():
+def ensure_admin_tenant_present():
     """
-    Ensure the master tenant is registered in the local db.
+    Ensure the admin tenant is registered in the local db.
     :return: 
     """
     ensure_primary_site_present()
-    # if the master tenant is already registered, just escape 0
+    # if the admin tenant is already registered, just escape 0
     tenants = get_tenants()
     for tenant in tenants:
-        if tenant.get('tenant_id') == 'master':
+        if tenant.get('tenant_id') == 'admin':
             return
     try:
         add_owner(name='CIC Support', email='CICSupport@tacc.utexas.edu', institution='UT Austin')
@@ -193,11 +193,11 @@ def ensure_master_tenant_present():
         # tenant.
         db.session.rollback()
     # use the base URL configured for this Tenants API service.
-    base_url = conf.primary_site_master_tenant_base_url
+    base_url = conf.primary_site_admin_tenant_base_url
     site_id = 'tacc'
     try:
-        # the master tenant
-        add_tenant(tenant_id='master',
+        # the admin tenant
+        add_tenant(tenant_id='admin',
                    base_url=base_url,
                    site_id=site_id,
                    token_service=f'{base_url}/v3/tokens',
@@ -205,13 +205,13 @@ def ensure_master_tenant_present():
                    authenticator=f'{base_url}/v3/oauth2',
                    owner='CICSupport@tacc.utexas.edu',
                    admin_user='admin',
-                   # in the master tenant, only the tokens service should have the token_generator role
-                   token_gen_services=['token'],
+                   # in the admin tenant, no additional services should have the token_generator role
+                   token_gen_services=[],
                    service_ldap_connection_id=None,
                    user_ldap_connection_id=None,
-                   description='The master tenant.')
+                   description='The admin tenant.')
     except Exception as e:
-        logger.error(f'Got exception trying to add the dev tenant. e: {e}')
+        logger.error(f'Got exception trying to add the admin tenant. e: {e}')
         # we have to swallow this exception as well because it is possible this code is running from within the
         # migrations container before the migrations have tun to create the table.
         db.session.rollback()
@@ -227,7 +227,7 @@ def ensure_dev_tenant_present():
     for tenant in tenants:
         if tenant.get('tenant_id') == 'dev':
             return
-    base_url = conf.primary_site_master_tenant_base_url.replace('master', 'dev')
+    base_url = conf.primary_site_admin_tenant_base_url.replace('admin', 'dev')
     # add the dev ldap
     try:
         add_ldap(ldap_id="tapis-dev",
@@ -299,7 +299,7 @@ def add_ldap(ldap_id, account_type, bind_credential, bind_dn, port, url, use_ssl
 def add_primary_site(site_id,
                      base_url,
                      tenant_base_url_template,
-                     site_master_tenant_id,
+                     site_admin_tenant_id,
                      services):
     """
     Convenience function for adding the (one and only) primary site directly to the db.
@@ -310,7 +310,7 @@ def add_primary_site(site_id,
                 base_url=base_url,
                 primary=True,
                 tenant_base_url_template=tenant_base_url_template,
-                site_master_tenant_id=site_master_tenant_id,
+                site_admin_tenant_id=site_admin_tenant_id,
                 services=services)
     db.session.add(site)
     db.session.commit()
