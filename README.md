@@ -88,7 +88,7 @@ for our tenant.
 below, we assume a valid JWT has been exported to the `jwt` variable. For example,
 
 ```
-$ curl -u "tenants:<pass>" -H "Content-type: application/json" -d '{"token_tenant_id": "master", "account_type": "service", "token_username": "tenants", "access_token_ttl": 99999999}'  https://master.develop.tapis.io/v3/tokens
+$ curl -u "tenants:<pass>" -H "Content-type: application/json" -d '{"token_tenant_id": "admin", "account_type": "service", "token_username": "tenants", "access_token_ttl": 99999999}'  https://admin.develop.tapis.io/v3/tokens
 ```
 
 #### Get an Authorized JWT
@@ -255,7 +255,7 @@ Listing and retrieving tenants works just like in the case of owners and LDAP ob
 Here is an example of creating a site.
 
 ```
-curl -H "X-Tapis-Token: $jwt" localhost:5000/v3/sites -H "content-type: application/json" -d '{"site_id":"tacc", "primary": True, "base_url": "https://api.tacc.utexas.edu", "tenant_base_url_template": "https://api.tacc.utexas.edu", "site_master_tenant_id": "dev", "services": ["tokens", "tenants"]}'
+curl -H "X-Tapis-Token: $jwt" localhost:5000/v3/sites -H "content-type: application/json" -d '{"site_id":"tacc", "primary": True, "base_url": "https://api.tacc.utexas.edu", "tenant_base_url_template": "https://api.tacc.utexas.edu", "site_admin_tenant_id": "dev", "services": ["tokens", "tenants"]}'
 
 {
   "message":"Site object created successfully.",
@@ -263,7 +263,7 @@ curl -H "X-Tapis-Token: $jwt" localhost:5000/v3/sites -H "content-type: applicat
     "base_url":"https://api.tacc.utexas.edu",
     "primary":true,"services":["tokens","tenants"],
     "site_id":"tacc",
-    "site_master_tenant_id":"dev",
+    "site_admin_tenant_id":"dev",
     "tenant_base_url_template":"https://api.tacc.utexas.edu"},
     "status":"success",
     "version":"dev"
