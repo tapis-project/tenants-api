@@ -1,14 +1,16 @@
 import datetime
 import enum
+import json
 from flask import g, Flask
 from sqlalchemy.types import ARRAY
 
 from common.config import conf
-from service import db
+from service import db, MIGRATIONS_RUNNING
 # get the logger instance -
 from common.logs import get_logger
 logger = get_logger(__name__)
 
+public_key = "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAz7rr5CsFM7rHMFs7uKIdcczn0uL4ebRMvH8pihrg1tW/fp5Q+5ktltoBTfIaVDrXGF4DiCuzLsuvTG5fGElKEPPcpNqaCzD8Y1v9r3tfkoPT3Bd5KbF9f6eIwrGERMTs1kv7665pliwehz91nAB9DMqqSyjyKY3tpSIaPKzJKUMsKJjPi9QAS167ylEBlr5PECG4slWLDAtSizoiA3fZ7fpngfNr4H6b2iQwRtPEV/EnSg1N3Oj1x8ktJPwbReKprHGiEDlqdyT6j58l/I+9ihR6ettkMVCq7Ho/bsIrwm5gP0PjJRvaD5Flsze7P4gQT37D1c5nbLR+K6/T0QTiyQIDAQAB\n-----END PUBLIC KEY-----"
 
 class Site(db.Model):
     __tablename__ = 'site'
@@ -22,6 +24,11 @@ class Site(db.Model):
     site_admin_tenant_id = db.Column(db.String, nullable=False)
     services = db.Column(ARRAY(db.String), unique=False, nullable=False)
 
+    create_time = db.Column(db.DateTime, nullable=False)
+    last_update_time = db.Column(db.DateTime, default=datetime.datetime.utcnow, nullable=False)
+    created_by = db.Column(db.String(120), unique=False, nullable=False)
+    last_updated_by = db.Column(db.String(120), unique=False, nullable=False)
+
     def __repr__(self):
         return f'{self.site_id}'
 
@@ -33,7 +40,11 @@ class Site(db.Model):
             "base_url": self.base_url,
             "tenant_base_url_template": self.tenant_base_url_template,
             "site_admin_tenant_id": self.site_admin_tenant_id,
-            "services": self.services
+            "services": self.services,
+            "create_time": str(self.create_time),
+            "created_by": self.created_by,
+            "last_update_time": str(self.last_update_time),
+            "last_updated_by": self.last_updated_by
         }
 
 
@@ -112,6 +123,9 @@ def get_tenants():
     Convenience function to return the list of tenants in the db.
     :return: (list[dict]) List of tenant descriptions.
     """
+    if MIGRATIONS_RUNNING:
+        logger.info("detected that migrations are running.. skipping calculation of tenants")
+        return []
     try:
         tenants = Tenant.query.all()
         return [t.serialize for t in tenants]
@@ -127,6 +141,9 @@ def get_sites():
     Convenience function to return the list of sites in the db.
     :return: (list[dict]) List of site descriptions.
     """
+    if MIGRATIONS_RUNNING:
+        logger.info("detected that migrations are running.. skipping calculation of sites")
+        return []
     try:
         sites = Site.query.all()
         return [s.serialize for s in sites]
@@ -179,6 +196,7 @@ def ensure_admin_tenant_present():
     Ensure the admin tenant is registered in the local db.
     :return: 
     """
+    logger.debug("top of ensure_admin_tenant_present")
     ensure_primary_site_present()
     # if the admin tenant is already registered, just escape 0
     tenants = get_tenants()
@@ -209,12 +227,15 @@ def ensure_admin_tenant_present():
                    token_gen_services=[],
                    service_ldap_connection_id=None,
                    user_ldap_connection_id=None,
-                   description='The admin tenant.')
+                   description='The admin tenant.',
+                   status='inactive',
+                   public_key=public_key)
     except Exception as e:
         logger.error(f'Got exception trying to add the admin tenant. e: {e}')
         # we have to swallow this exception as well because it is possible this code is running from within the
         # migrations container before the migrations have tun to create the table.
         db.session.rollback()
+    logger.info("admin tenant added")
 
 
 def ensure_dev_tenant_present():
@@ -222,6 +243,7 @@ def ensure_dev_tenant_present():
     Ensure the dev tenant is registered in the local db.
     :return:
     """
+    logger.debug("top of ensure_dev_tenant_present")
     ensure_primary_site_present()
     tenants = get_tenants()
     for tenant in tenants:
@@ -236,7 +258,7 @@ def ensure_dev_tenant_present():
                  use_ssl=False,
                  user_dn="ou=tenants.dev,dc=tapis",
                  bind_dn="cn=admin,dc=tapis",
-                 bind_credential="ldap.tapis-dev.password",
+                 bind_credential="ldap.tapis-dev",
                  account_type="user")
     except Exception as e:
         logger.info(f'Got exception trying to add an ldap; e: {e}')
@@ -256,12 +278,16 @@ def ensure_dev_tenant_present():
                    token_gen_services=['abaco', 'authenticator'],
                    service_ldap_connection_id=None,
                    user_ldap_connection_id='tapis-dev',
-                   description='The dev tenant.')
+                   description='The dev tenant.',
+                   status='inactive',
+                   public_key=public_key)
     except Exception as e:
         logger.error(f'Got exception trying to add the dev tenant. e: {e}')
         # we have to swallow this exception as well because it is possible this code is running from within the
         # migrations container before the migrations have tun to create the table.
         db.session.rollback()
+    logger.info("dev tenant added")
+
 
 def add_owner(name, email, institution):
     """
@@ -296,6 +322,7 @@ def add_ldap(ldap_id, account_type, bind_credential, bind_dn, port, url, use_ssl
     db.session.add(ldap)
     db.session.commit()
 
+
 def add_primary_site(site_id,
                      base_url,
                      tenant_base_url_template,
@@ -311,7 +338,11 @@ def add_primary_site(site_id,
                 primary=True,
                 tenant_base_url_template=tenant_base_url_template,
                 site_admin_tenant_id=site_admin_tenant_id,
-                services=services)
+                services=services,
+                created_by='tenants@admin',
+                create_time=datetime.datetime.now(),
+                last_updated_by='tenants@admin',
+                last_update_time=datetime.datetime.now())
     db.session.add(site)
     db.session.commit()
 
@@ -327,7 +358,9 @@ def add_tenant(tenant_id,
                token_gen_services,
                service_ldap_connection_id,
                user_ldap_connection_id,
-               description):
+               description,
+               status,
+               public_key):
     """
     Convenience function for adding a tenant directly to the db.
     :return:
@@ -345,9 +378,37 @@ def add_tenant(tenant_id,
                         user_ldap_connection_id=user_ldap_connection_id,
                         description=description,
                         create_time=datetime.datetime.utcnow(),
-                        last_update_time=datetime.datetime.utcnow())
+                        created_by='tenants@admin',
+                        last_update_time=datetime.datetime.utcnow(),
+                        last_updated_by='tenants@admin',
+                        status=status,
+                        public_key=public_key
+                    )
     db.session.add(tenant)
     db.session.commit()
+
+
+class TenantStatusTypes(enum.Enum):
+    """
+    Enum class of possible statuses for a tenant.
+    """
+    draft = 'DRAFT'
+    active = 'ACTIVE'
+    inactive = 'INACTIVE'
+
+    def __repr__(self):
+        if self is TenantStatusTypes.draft:
+            return 'DRAFT'
+        elif self is TenantStatusTypes.active:
+            return 'ACTIVE'
+        return 'INACTIVE'
+
+    def __str__(self):
+        return self.__repr__()
+
+    @property
+    def serialize(self):
+        return str(self)
 
 
 class Tenant(db.Model):
@@ -356,6 +417,7 @@ class Tenant(db.Model):
     tenant_id = db.Column(db.String(50), unique=True, nullable=False)
     base_url = db.Column(db.String(2000), unique=True, nullable=False)
     site_id = db.Column(db.String(50), primary_key=False, nullable=False)
+    status = db.Column(db.Enum(TenantStatusTypes), unique=False, nullable=False)
     token_service = db.Column(db.String(2000), unique=False, nullable=False)
     security_kernel = db.Column(db.String(2000), unique=False, nullable=False)
     authenticator = db.Column(db.String(2000), unique=False, nullable=False)
@@ -364,8 +426,11 @@ class Tenant(db.Model):
     token_gen_services = db.Column(ARRAY(db.String), unique=False, nullable=False)
     create_time = db.Column(db.DateTime, nullable=False)
     last_update_time = db.Column(db.DateTime, default=datetime.datetime.utcnow, nullable=False)
-
-    # ldap connections are not required if the tenant will use an alternative mechanism for authenticating accounts -
+    created_by = db.Column(db.String(120), unique=False, nullable=False)
+    last_updated_by = db.Column(db.String(120), unique=False, nullable=False)
+    public_key = db.Column(db.String(10000), unique=False, nullable=True)
+    # NOTE: ldap connections are not required if the tenant will use an alternative mechanism for authenticating
+    # accounts:
     service_ldap_connection_id = db.Column(db.String(50), db.ForeignKey('ldap_connections.ldap_id'), nullable=True)
     user_ldap_connection_id = db.Column(db.String(50), db.ForeignKey('ldap_connections.ldap_id'), nullable=True)
     description = db.Column(db.String(1000), unique=False, nullable=True)
@@ -387,23 +452,14 @@ class Tenant(db.Model):
             'token_gen_services': self.token_gen_services,
             'service_ldap_connection_id': self.service_ldap_connection_id,
             'user_ldap_connection_id': self.user_ldap_connection_id,
-            'public_key': self.get_public_key(),
+            'public_key': self.public_key,
+            'status': self.status.serialize,
             'description': self.description,
-            "create_time": self.create_time,
-            "last_update_time": self.last_update_time,
+            'create_time': str(self.create_time),
+            'created_by': self.created_by,
+            'last_updated_by': self.last_updated_by,
+            'last_update_time': str(self.last_update_time),
         }
-        # the following code references the the flask thread-local object, g, but this will throw a runtime error
-        # if executed outside of the application context. that will happen at service initialization when
-        # get_tenants() is called to determine the list of tenants in the system.
-        #
-        # UPDATE: 3/2020: sending back ldap properties regardless of authentication since some services
-        #                 including the authenticators will need the fields to determine how they should init.
-        # try:
-        #     if hasattr(g, 'no_token') and g.no_token:
-        #         d.pop('service_ldap_connection_id')
-        #         d.pop('user_ldap_connection_id')
-        # except RuntimeError:
-        #     pass
         return d
 
     def get_public_key(self):
@@ -413,3 +469,22 @@ class Tenant(db.Model):
         """
         # todo - This ultimately needs to be changed to look up the public key from the SK.
         return conf.dev_jwt_public_key
+
+
+class TenantHistory(db.Model):
+    __tablename__ = 'tenants_history'
+    id = db.Column(db.Integer, primary_key=True)
+    tenant_id = db.Column(db.String(50), db.ForeignKey('tenants.tenant_id'), nullable=False)
+    update_time = db.Column(db.DateTime, default=datetime.datetime.utcnow, nullable=False)
+    updated_by = db.Column(db.String(120), unique=False, nullable=False)
+    updates_as_json = db.Column(db.String(10000), unique=False, nullable=False)
+
+    @property
+    def serialize(self):
+        d = {
+            'tenant_id': self.tenant_id,
+            'update_time': str(self.update_time),
+            'updated_by': self.updated_by,
+            'updates': json.loads(self.updates_as_json)
+        }
+        return d

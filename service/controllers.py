@@ -1,5 +1,6 @@
 import datetime
-from flask import request
+import json
+from flask import request, g
 from flask_restful import Resource
 from openapi_core.shortcuts import RequestValidator
 from openapi_core.wrappers.flask import FlaskOpenAPIRequest
@@ -7,7 +8,7 @@ from openapi_core.wrappers.flask import FlaskOpenAPIRequest
 import sqlalchemy
 from service import db
 from common import utils, errors
-from service.models import LDAPConnection, TenantOwner, Tenant, Site
+from service.models import LDAPConnection, TenantOwner, Tenant, TenantHistory, Site
 
 # get the logger instance -
 from common.logs import get_logger
@@ -47,7 +48,11 @@ class SitesResource(Resource):
                             base_url=validated_body.base_url,
                             tenant_base_url_template=validated_body.tenant_base_url_template,
                             site_admin_tenant_id=validated_body.site_admin_tenant_id,
-                            services=validated_body.services)
+                            services=validated_body.services,
+                            create_time=datetime.datetime.utcnow(),
+                            created_by=f'{g.username}@{g.tenant_id}',
+                            last_updated_by=f'{g.username}@{g.tenant_id}',
+                            last_update_time=datetime.datetime.utcnow())
 
             # request if for an associate site:
             else:
@@ -59,7 +64,11 @@ class SitesResource(Resource):
                             primary=False,
                             base_url=validated_body.base_url,
                             site_admin_tenant_id=validated_body.site_admin_tenant_id,
-                            services=validated_body.services)
+                            services=validated_body.services,
+                            create_time=datetime.datetime.utcnow(),
+                            created_by=f'{g.username}@{g.tenant_id}',
+                            last_updated_by=f'{g.username}@{g.tenant_id}',
+                            last_update_time=datetime.datetime.utcnow())
             logger.info(f'creating site {validated_body.site_id}')
         except Exception as e:
             raise errors.ResourceError(f"Invalid POST data; {e}")
@@ -236,7 +245,22 @@ class TenantsResource(Resource):
 
     def get(self):
         logger.debug(f"top of GET /tenants")
-        tenants = Tenant.query.all()
+        show_draft = request.args.get('show_draft', False)
+        show_inactive = request.args.get('show_inactive', False)
+        logger.debug(request.args)
+        logger.debug(f"show_draft: {show_draft}; show_inactive: {show_inactive}")
+        if show_draft and show_inactive:
+            logger.debug("getting all")
+            tenants = Tenant.query.all()
+        elif show_draft:
+            logger.debug("getting active or draft")
+            tenants = db.session.query(Tenant).filter(sqlalchemy.or_(Tenant.status=='active', Tenant.status=='draft')).all()
+        elif show_inactive:
+            logger.debug("getting active or inactive")
+            tenants = db.session.query(Tenant).filter(sqlalchemy.or_(Tenant.status=='active', Tenant.status=='inactive')).all()
+        else:
+            logger.debug("getting active")
+            tenants = db.session.query(Tenant).filter(Tenant.status=='active')
         return utils.ok(result=[t.serialize for t in tenants], msg="Tenants retrieved successfully.")
 
     def post(self):
@@ -244,7 +268,7 @@ class TenantsResource(Resource):
         validator = RequestValidator(utils.spec)
         result = validator.validate(FlaskOpenAPIRequest(request))
         if result.errors:
-            logger.debug(f"openapi_core validattion failed. errors: {result.errors}")
+            logger.debug(f"openapi_core validation failed. errors: {result.errors}")
             raise errors.ResourceError(msg=f'Invalid POST data: {result.errors}.')
 
         validated_body = result.body
@@ -309,6 +333,8 @@ class TenantsResource(Resource):
                         user_ldap_connection_id=getattr(validated_body, 'user_ldap_connection_id', None),
                         description=getattr(validated_body, 'description', None),
                         create_time=datetime.datetime.utcnow(),
+                        created_by=f'{g.username}@{g.tenant_id}',
+                        last_updated_by=f'{g.username}@{g.tenant_id}',
                         last_update_time=datetime.datetime.utcnow())
         db.session.add(tenant)
         try:
@@ -335,13 +361,167 @@ class TenantResource(Resource):
             raise errors.ResourceError(msg=f'No tenant found with tenant_id {tenant_id}.')
         return utils.ok(result=tenant.serialize, msg='Tenant retrieved successfully.')
 
-    def delete(self, tenant_id):
-        logger.debug(f"top of DELETE /tenants/{tenant_id}")
+    def put(self, tenant_id):
+        logger.debug(f"top of PUT /tenants/{tenant_id}")
         tenant = Tenant.query.filter_by(tenant_id=tenant_id).first()
         if not tenant:
-            logger.debug(f"Did not find a tenant with id {tenant_id}. Returning an error.")
             raise errors.ResourceError(msg=f'No tenant found with tenant_id {tenant_id}.')
-        logger.debug("tenant found; issuing delete and commit.")
-        db.session.delete(tenant)
-        db.session.commit()
-        return utils.ok(result=None, msg=f'Tenant {tenant_id} deleted successfully.')
+        validator = RequestValidator(utils.spec)
+        result = validator.validate(FlaskOpenAPIRequest(request))
+        if result.errors:
+            logger.debug(f"openapi_core validation failed. errors: {result.errors}")
+            raise errors.ResourceError(msg=f'Invalid PUT data: {result.errors}.')
+        validated_body = result.body
+        logger.debug(f"initial openapi_core validation passed. validated_body: {dir(validated_body)}")
+        # TODO --
+        # ------------------------- This DOES NOT WORK ------------------------------------
+        # the validated_body ONLY contains fields in the OAI spec; need to change this to look at the
+        # request body itself
+        if not getattr(validated_body, 'site_id', tenant.site_id) == tenant.site_id:
+            raise errors.ResourceError(msg=f'Invalid PUT data: cannot change site_id.')
+        if not getattr(validated_body, 'tenant_id', tenant.tenant_id) == tenant.tenant_id:
+            raise errors.ResourceError(msg=f'Invalid PUT data: cannot change tenant_id.')
+        if not getattr(validated_body, 'base_url', tenant.base_url) == tenant.base_url:
+            raise errors.ResourceError(msg=f'Invalid PUT data: cannot change base_url.')
+        # ------------------------------------------------------------------------------------
+
+        # validate the existence of the ldap and owner objects:
+        if getattr(validated_body, 'owner', None):
+            owner = TenantOwner.query.filter_by(email=validated_body.owner).first()
+            if not owner:
+                raise errors.ResourceError(msg=f'Invalid tenant description. Owner {validated_body.owner} not found.')
+            logger.debug("owner was valid.")
+        if getattr(validated_body, 'user_ldap_connection_id', None):
+            ldap = LDAPConnection.query.filter_by(ldap_id=validated_body.user_ldap_connection_id).first()
+            if not ldap:
+                raise errors.ResourceError(msg=f'Invalid tenant description. '
+                                               f'LDAP {validated_body.user_ldap_connection_id} not found.')
+        if getattr(validated_body, 'service_ldap_connection_id', None) and \
+                not validated_body.service_ldap_connection_id == getattr(validated_body, 'user_ldap_connection_id', None):
+            ldap = LDAPConnection.query.filter_by(ldap_id=validated_body.service_ldap_connection_id).first()
+            if not ldap:
+                raise errors.ResourceError(msg=f'Invalid tenant description. '
+                                               f'LDAP {validated_body.service_ldap_connection_id} not found.')
+
+        # overlay the tenant_current with the updates specified in the request body.
+        changes_dict = {}
+        # security_kernel
+        new_security_kernel = getattr(validated_body, 'security_kernel', None)
+        if new_security_kernel and not new_security_kernel == tenant.secuity_kernel:
+            changes_dict['security_kernel'] = {'prev': tenant.secuity_kernel, 'new': new_security_kernel}
+            tenant.security_kernel = new_security_kernel
+        else:
+            changes_dict['security_kernel'] = None
+        # token_service
+        new_tokens_service = getattr(validated_body, 'token_service', None)
+        if new_tokens_service and not new_tokens_service == tenant.token_service:
+            changes_dict['tokens_service'] = {'prev': tenant.token_service, 'new': new_tokens_service}
+            tenant.token_service = new_tokens_service
+        else:
+            changes_dict['tokens_service'] = None
+        # authenticator
+        new_authenticator = getattr(validated_body, 'authenticator', None)
+        if new_authenticator and not new_authenticator == tenant.authenticator:
+            changes_dict['authenticator'] = {'prev': tenant.authenticator, 'new': new_authenticator}
+            tenant.authenticator = new_authenticator
+        else:
+            changes_dict['authenticator'] = None
+        # admin_user
+        new_admin_user = getattr(validated_body, 'admin_user', None)
+        if new_admin_user and not new_admin_user == tenant.admin_user:
+            changes_dict['admin_user'] = {'prev': tenant.admin_user, 'new': new_admin_user}
+            tenant.admin_user = new_admin_user
+        else:
+            changes_dict['admin_user'] = None
+        # token_gen_services
+        new_token_gen_services = getattr(validated_body, 'token_gen_services', None)
+        if new_token_gen_services and not new_token_gen_services == tenant.token_gen_services:
+            changes_dict['token_gen_services'] = {'prev': tenant.token_gen_services, 'new': new_token_gen_services}
+            tenant.token_gen_services = new_token_gen_services
+        else:
+            changes_dict['token_gen_services'] = None
+        # service_ldap_connection_id
+        new_service_ldap_connection_id = getattr(validated_body, 'service_ldap_connection_id', None)
+        if new_service_ldap_connection_id and not new_service_ldap_connection_id == tenant.service_ldap_connection_id:
+            changes_dict['service_ldap_connection_id'] = {'prev': tenant.service_ldap_connection_id,
+                                                          'new': new_service_ldap_connection_id}
+            tenant.service_ldap_connection_id = new_service_ldap_connection_id
+        else:
+            changes_dict['service_ldap_connection_id'] = None
+        # user_ldap_connection_id
+        new_user_ldap_connection_id = getattr(validated_body, 'user_ldap_connection_id', None)
+        if new_user_ldap_connection_id and not new_user_ldap_connection_id == tenant.user_ldap_connection_id:
+            changes_dict['user_ldap_connection_id'] = {'prev': tenant.user_ldap_connection_id,
+                                                          'new': new_user_ldap_connection_id}
+            tenant.user_ldap_connection_id = new_user_ldap_connection_id
+        else:
+            changes_dict['user_ldap_connection_id'] = None
+        # public_key
+        new_public_key = getattr(validated_body, 'public_key', None)
+        if new_public_key and not new_public_key == tenant.public_key:
+            changes_dict['public_key'] = {'prev': tenant.public_key, 'new': new_public_key}
+            tenant.public_key = new_public_key
+        else:
+            changes_dict['public_key'] = None
+        # status
+        new_status = getattr(validated_body, 'status', None)
+        if new_status and not new_status == tenant.status:
+            changes_dict['status'] = {'prev': tenant.status, 'new': new_status}
+            tenant.status = new_status
+        else:
+            changes_dict['status'] = None
+        # description
+        new_description = getattr(validated_body, 'description', None)
+        if new_description and not new_description == tenant.description:
+            changes_dict['description'] = {'prev': tenant.description, 'new': new_description}
+            tenant.description = new_description
+        else:
+            changes_dict['description'] = None
+        # owner
+        new_owner = getattr(validated_body, 'owner', None)
+        if new_owner and not new_owner == tenant.owner:
+            changes_dict['owner'] = {'prev': tenant.owner, 'new': new_owner}
+            tenant.owner = new_owner
+        else:
+            changes_dict['owner'] = None
+        # last_update_time and last_updated_by
+        update_time = datetime.datetime.utcnow()
+        updated_by = f'{g.username}@{g.tenant_id}'
+        tenant.last_update_time = update_time
+        tenant.last_updated_by = updated_by
+        # create the history record
+        tenant_history = TenantHistory(
+            tenant_id=tenant.tenant_id,
+            update_time=update_time,
+            updated_by=updated_by,
+            updates_as_json=json.dumps(changes_dict)
+        )
+        db.session.add(tenant_history)
+        try:
+            db.session.commit()
+            logger.info(f"update to tenant committed to db. tenant object: {tenant}")
+        except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.DBAPIError) as e:
+            logger.debug(f"got exception trying to commit updated tenant object to db. Exception: {e}")
+            msg = utils.get_message_from_sql_exc(e)
+            logger.debug(f"returning msg: {msg}")
+            raise errors.ResourceError(f"Invalid PUT data; {msg}")
+        logger.debug("returning serialized tenant object.")
+        return utils.ok(result=tenant.serialize, msg="Tenant created successfully.")
+
+    def delete(self, tenant_id):
+        logger.debug(f"top of DELETE /tenants/{tenant_id}")
+        # updated jfs 5/2021 -- removed delete functionality, as deleting tenants can cause issues with
+        # historical data that reference the tenant_id.
+        raise errors.ResourceError(msg=f'Deleting tenants is not supported; '
+                                       f'update the tenant status to inactive instead.')
+
+
+class TenantHistoryResource(Resource):
+    def get(self, tenant_id):
+        logger.debug(f"top of GET /tenants/{tenant_id}/history")
+        tenant = Tenant.query.filter_by(tenant_id=tenant_id).first()
+        if not tenant:
+            raise errors.ResourceError(msg=f'No tenant found with tenant_id {tenant_id}.')
+
+        tenant_history_list = TenantHistory.query.filter_by(tenant_id=tenant_id).all()
+        return utils.ok(result=[t.serialize for t in tenant_history_list], msg='Tenant history retrieved successfully.')
