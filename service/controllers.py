@@ -289,7 +289,7 @@ class TenantsResource(Resource):
             logger.error(msg)
             raise errors.ResourceError(msg)
         logger.debug("got past the reserved words check.")
-        # validate the existence of th site object:
+        # validate the existence of the site object:
         try:
             site_id = validated_body.site_id
             site = Site.query.filter_by(site_id=site_id).first()
@@ -323,6 +323,7 @@ class TenantsResource(Resource):
         tenant = Tenant(tenant_id=validated_body.tenant_id,
                         base_url=validated_body.base_url,
                         site_id=validated_body.site_id,
+                        status=validated_body.status,
                         token_service=validated_body.token_service,
                         security_kernel=validated_body.security_kernel,
                         authenticator=validated_body.authenticator,
@@ -407,83 +408,61 @@ class TenantResource(Resource):
         changes_dict = {}
         # security_kernel
         new_security_kernel = getattr(validated_body, 'security_kernel', None)
-        if new_security_kernel and not new_security_kernel == tenant.secuity_kernel:
-            changes_dict['security_kernel'] = {'prev': tenant.secuity_kernel, 'new': new_security_kernel}
+        if new_security_kernel and not new_security_kernel == tenant.security_kernel:
+            changes_dict['security_kernel'] = {'prev': tenant.security_kernel, 'new': new_security_kernel}
             tenant.security_kernel = new_security_kernel
-        else:
-            changes_dict['security_kernel'] = None
         # token_service
         new_tokens_service = getattr(validated_body, 'token_service', None)
         if new_tokens_service and not new_tokens_service == tenant.token_service:
             changes_dict['tokens_service'] = {'prev': tenant.token_service, 'new': new_tokens_service}
             tenant.token_service = new_tokens_service
-        else:
-            changes_dict['tokens_service'] = None
         # authenticator
         new_authenticator = getattr(validated_body, 'authenticator', None)
         if new_authenticator and not new_authenticator == tenant.authenticator:
             changes_dict['authenticator'] = {'prev': tenant.authenticator, 'new': new_authenticator}
             tenant.authenticator = new_authenticator
-        else:
-            changes_dict['authenticator'] = None
         # admin_user
         new_admin_user = getattr(validated_body, 'admin_user', None)
         if new_admin_user and not new_admin_user == tenant.admin_user:
             changes_dict['admin_user'] = {'prev': tenant.admin_user, 'new': new_admin_user}
             tenant.admin_user = new_admin_user
-        else:
-            changes_dict['admin_user'] = None
         # token_gen_services
         new_token_gen_services = getattr(validated_body, 'token_gen_services', None)
         if new_token_gen_services and not new_token_gen_services == tenant.token_gen_services:
             changes_dict['token_gen_services'] = {'prev': tenant.token_gen_services, 'new': new_token_gen_services}
             tenant.token_gen_services = new_token_gen_services
-        else:
-            changes_dict['token_gen_services'] = None
         # service_ldap_connection_id
         new_service_ldap_connection_id = getattr(validated_body, 'service_ldap_connection_id', None)
         if new_service_ldap_connection_id and not new_service_ldap_connection_id == tenant.service_ldap_connection_id:
             changes_dict['service_ldap_connection_id'] = {'prev': tenant.service_ldap_connection_id,
                                                           'new': new_service_ldap_connection_id}
             tenant.service_ldap_connection_id = new_service_ldap_connection_id
-        else:
-            changes_dict['service_ldap_connection_id'] = None
         # user_ldap_connection_id
         new_user_ldap_connection_id = getattr(validated_body, 'user_ldap_connection_id', None)
         if new_user_ldap_connection_id and not new_user_ldap_connection_id == tenant.user_ldap_connection_id:
             changes_dict['user_ldap_connection_id'] = {'prev': tenant.user_ldap_connection_id,
                                                           'new': new_user_ldap_connection_id}
             tenant.user_ldap_connection_id = new_user_ldap_connection_id
-        else:
-            changes_dict['user_ldap_connection_id'] = None
         # public_key
         new_public_key = getattr(validated_body, 'public_key', None)
         if new_public_key and not new_public_key == tenant.public_key:
             changes_dict['public_key'] = {'prev': tenant.public_key, 'new': new_public_key}
             tenant.public_key = new_public_key
-        else:
-            changes_dict['public_key'] = None
         # status
         new_status = getattr(validated_body, 'status', None)
         if new_status and not new_status == tenant.status:
-            changes_dict['status'] = {'prev': tenant.status, 'new': new_status}
+            changes_dict['status'] = {'prev': tenant.status.serialize, 'new': new_status.upper()}
             tenant.status = new_status
-        else:
-            changes_dict['status'] = None
         # description
         new_description = getattr(validated_body, 'description', None)
         if new_description and not new_description == tenant.description:
             changes_dict['description'] = {'prev': tenant.description, 'new': new_description}
             tenant.description = new_description
-        else:
-            changes_dict['description'] = None
         # owner
         new_owner = getattr(validated_body, 'owner', None)
         if new_owner and not new_owner == tenant.owner:
             changes_dict['owner'] = {'prev': tenant.owner, 'new': new_owner}
             tenant.owner = new_owner
-        else:
-            changes_dict['owner'] = None
         # last_update_time and last_updated_by
         update_time = datetime.datetime.utcnow()
         updated_by = f'{g.username}@{g.tenant_id}'
@@ -506,7 +485,7 @@ class TenantResource(Resource):
             logger.debug(f"returning msg: {msg}")
             raise errors.ResourceError(f"Invalid PUT data; {msg}")
         logger.debug("returning serialized tenant object.")
-        return utils.ok(result=tenant.serialize, msg="Tenant created successfully.")
+        return utils.ok(result=tenant.serialize, msg="Tenant updated successfully.")
 
     def delete(self, tenant_id):
         logger.debug(f"top of DELETE /tenants/{tenant_id}")
