@@ -249,18 +249,47 @@ class TenantsResource(Resource):
         show_inactive = request.args.get('show_inactive', False)
         logger.debug(request.args)
         logger.debug(f"show_draft: {show_draft}; show_inactive: {show_inactive}")
+        # get select parameter for only returning certain fields
+        select_str = request.args.get('select', '')
+        # these are the fields that can be selected from the tenants model
+
+        selected_fields = []
+        # iterate through the comma-separated list of selected attributes provided by the user to determine which
+        # are selectable.
+        if select_str:
+            select_list = select_str.split(',')
+            for attribute in select_list:
+                if attribute.strip() in Tenant.selectable_fields:
+                    # create the argument to the with_entities() sqlalchemy function; this is a list of
+                    # the form Tenant.<field>
+                    selected_fields.append(getattr(Tenant, attribute.strip()))
+        logger.debug(f"selected_fields: {selected_fields}")
         if show_draft and show_inactive:
             logger.debug("getting all")
-            tenants = Tenant.query.all()
+            if len(selected_fields) > 0:
+                tenants = [Tenant(**t) for t in Tenant.query.with_entities(*selected_fields).all()]
+            else:
+                tenants = Tenant.query.all()
         elif show_draft:
             logger.debug("getting active or draft")
-            tenants = db.session.query(Tenant).filter(sqlalchemy.or_(Tenant.status=='active', Tenant.status=='draft')).all()
+            if len(selected_fields) > 0:
+                tenants = [Tenant(**t) for t in db.session.query(Tenant).filter(
+                    sqlalchemy.or_(Tenant.status == 'active', Tenant.status == 'draft')).with_entities(*selected_fields).all()]
+            else:
+                tenants = db.session.query(Tenant).filter(sqlalchemy.or_(Tenant.status=='active', Tenant.status=='draft')).all()
         elif show_inactive:
             logger.debug("getting active or inactive")
-            tenants = db.session.query(Tenant).filter(sqlalchemy.or_(Tenant.status=='active', Tenant.status=='inactive')).all()
+            if len(selected_fields) > 0:
+                tenants = [Tenant(**t) for t in db.session.query(Tenant).filter(
+                    sqlalchemy.or_(Tenant.status=='active', Tenant.status=='inactive')).with_entities(*selected_fields).all()]
+            else:
+                tenants = db.session.query(Tenant).filter(sqlalchemy.or_(Tenant.status == 'active', Tenant.status == 'inactive')).all()
         else:
             logger.debug("getting active")
-            tenants = db.session.query(Tenant).filter(Tenant.status=='active')
+            if len(selected_fields) > 0:
+                tenants = [Tenant(**t) for t in db.session.query(Tenant).filter(Tenant.status=='active').with_entities(*selected_fields).all()]
+            else:
+                tenants = db.session.query(Tenant).filter(Tenant.status == 'active').all()
         return utils.ok(result=[t.serialize for t in tenants], msg="Tenants retrieved successfully.")
 
     def post(self):

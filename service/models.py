@@ -438,28 +438,55 @@ class Tenant(db.Model):
     def __repr__(self):
         return f'{self.tenant_id}: {self.description}'
 
+    fields_metadata = {
+        'tenant_id': {'selectable': True,
+                      'serializer': 'self.tenant_id'},
+        'base_url': {'selectable': True,
+                      'serializer': 'self.base_url'},
+        'site_id': {'selectable': True,
+                      'serializer': 'self.site_id'},
+        'status': {'selectable': True,
+                   'serializer': 'self.status.serialize'},
+        'token_service': {'selectable': True,
+                          'serializer': 'self.token_service'},
+        'security_kernel': {'selectable': True,
+                      'serializer': 'self.security_kernel'},
+        'authenticator': {'selectable': True,
+                          'serializer': 'self.authenticator'},
+        'owner': {'selectable': True,
+                  'serializer': 'self.owner'},
+        'admin_user': {'selectable': True,
+                      'serializer': 'self.admin_user'},
+        'token_gen_services': {'selectable': True,
+                               'serializer': 'self.token_gen_services'},
+        'create_time': {'selectable': True,
+                      'serializer': 'str(self.create_time)'},
+        'created_by': {'selectable': True,
+                      'serializer': 'self.created_by'},
+        'last_update_time': {'selectable': True,
+                      'serializer': 'str(self.last_update_time)'},
+        'last_updated_by': {'selectable': True,
+                      'serializer': 'self.last_updated_by'},
+        'public_key': {'selectable': True,
+                      'serializer': 'self.public_key'},
+        'service_ldap_connection_id': {'selectable': True,
+                      'serializer': 'self.service_ldap_connection_id'},
+        'user_ldap_connection_id': {'selectable': True,
+                      'serializer': 'self.user_ldap_connection_id'},
+        'description': {'selectable': True,
+                      'serializer': 'self.description'},
+
+    }
+
+
+    selectable_fields = [attr for attr, meta in fields_metadata.items() if meta['selectable']]
+
     @property
     def serialize(self):
-        d = {
-            'tenant_id': self.tenant_id,
-            'base_url': self.base_url,
-            'site_id': self.site_id,
-            'token_service': self.token_service,
-            'security_kernel': self.security_kernel,
-            'authenticator': self.authenticator,
-            'owner': self.owner,
-            'admin_user': self.admin_user,
-            'token_gen_services': self.token_gen_services,
-            'service_ldap_connection_id': self.service_ldap_connection_id,
-            'user_ldap_connection_id': self.user_ldap_connection_id,
-            'public_key': self.public_key,
-            'status': self.status.serialize,
-            'description': self.description,
-            'create_time': str(self.create_time),
-            'created_by': self.created_by,
-            'last_updated_by': self.last_updated_by,
-            'last_update_time': str(self.last_update_time),
-        }
+        d = {}
+        for attr, meta in Tenant.fields_metadata.items():
+            if hasattr(self, attr) and getattr(self, attr):
+                d[attr] = eval(meta['serializer'])
         return d
 
     def get_public_key(self):
