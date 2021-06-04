@@ -354,6 +354,7 @@ class TenantsResource(Resource):
                         base_url=validated_body.base_url,
                         site_id=validated_body.site_id,
                         status=validated_body.status,
+                        public_key=getattr(validated_body, 'public_key', None),
                         token_service=validated_body.token_service,
                         security_kernel=validated_body.security_kernel,
                         authenticator=validated_body.authenticator,
