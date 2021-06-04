@@ -7,6 +7,7 @@ from openapi_core.wrappers.flask import FlaskOpenAPIRequest
 # import psycopg2
 import sqlalchemy
 from service import db
+from service.auth import check_authz_tenant_update
 from common import utils, errors
 from service.models import LDAPConnection, TenantOwner, Tenant, TenantHistory, Site
 
@@ -396,6 +397,8 @@ class TenantResource(Resource):
         tenant = Tenant.query.filter_by(tenant_id=tenant_id).first()
         if not tenant:
             raise errors.ResourceError(msg=f'No tenant found with tenant_id {tenant_id}.')
+        # additional authorization checks on update based on the tenant_id of the request:
+        check_authz_tenant_update(tenant_id)
         validator = RequestValidator(utils.spec)
         result = validator.validate(FlaskOpenAPIRequest(request))
         if result.errors:
