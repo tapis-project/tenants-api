@@ -37,7 +37,11 @@ def init_db():
             base_url='tacc.utexas.edu',
             tenant_base_url_template='test',
             site_admin_tenant_id='test',
-            services=['test']
+            services=['test'],
+            create_time=datetime.datetime.now(),
+            last_update_time=datetime.datetime.now(),
+            created_by='tenants@admin',
+            last_updated_by='tenants@admin'
         )
         models.db.session.add(tacc_site)
         models.db.session.commit()
@@ -86,7 +90,12 @@ def init_db():
             service_ldap_connection_id='tacc.test.service',
             user_ldap_connection_id='tacc.test.user',
             description='testing',
-            create_time=datetime.datetime.now()
+            status='active',
+            create_time=datetime.datetime.now(),
+            public_key=conf.dev_jwt_public_key,
+            last_update_time=datetime.datetime.now(),
+            created_by='tenants@admin',
+            last_updated_by='tenants@admin'
         )
         models.db.session.add(tenant)
         models.db.session.commit()
@@ -103,7 +112,12 @@ def init_db():
             security_kernel='https://admin.develop.tapis.io/v3/security',
             owner='cicsupport@tacc.utexas.edu',
             description='testing',
-            create_time=datetime.datetime.now()
+            create_time=datetime.datetime.now(),
+            status='active',
+            public_key=conf.dev_jwt_public_key,
+            last_update_time=datetime.datetime.now(),
+            created_by='tenants@admin',
+            last_updated_by='tenants@admin'
         )
         models.db.session.add(tenant)
         models.db.session.commit()
@@ -149,7 +163,9 @@ def test_add_tenant_with_post(client, init_db):
             "site_id": "tacc",
             "service_ldap_connection_id": "tacc.test.service",
             "user_ldap_connection_id": "tacc.test.user",
-            "description": "Test tenant for all TACC users."
+            "description": "Test tenant for all TACC users.",
+            "status": "active",
+            "public_key": conf.dev_jwt_public_key,
         }
         headers = {
             "X-Tapis-Token": conf.test_jwt,
@@ -178,7 +194,8 @@ def test_add_tenant_without_optional_fields(client, init_db):
             "owner": "jlooney@tacc.utexas.edu",
             "authenticator": "https://test-dev.develop.tapis.io/foobar/oauth",
             "site_id": "tacc",
-            "token_gen_services": ["test"]
+            "token_gen_services": ["test"],
+            "status": "inactive",
         }
         headers = {
             "X-Tapis-Token": conf.test_jwt,
@@ -213,49 +230,6 @@ def test_list_tenants(client, init_db):
 def test_get_single_tenant(client, init_db):
     with client:
         response = client.get("http://localhost:5000/v3/tenants/dev")
-        assert response.status_code == 200
-
-
-def test_delete_single_tenant(client, init_db):
-    with client:
-
-        # First, create a new tenant so we can delete it
-        payload = {
-            "id": 23498,
-            "tenant_id": "lolidk",
-            "admin_user": "lolidk",
-            "base_url": "https://lolidk.develop.tapis.io",
-            "token_service": "https://lolidk.develop.tapis.io/foo/token",
-            "security_kernel": "https://lolidk.develop.tapis.io/bar/security",
-            "owner": "jlooney@tacc.utexas.edu",
-            "authenticator": "https://test-dev.develop.tapis.io/foobar/oauth",
-            "site_id": "tacc",
-            "token_gen_services": ["test"]
-        }
-        headers = {
-            "X-Tapis-Token": conf.test_jwt,
-            "X-Tapis-Tenant": "admin",
-            "X-Tapis-User": "tenants",
-        }
-        response = client.post(
-            "http://localhost:5000/v3/tenants",
-            headers=headers,
-            data=json.dumps(payload),
-            content_type='application/json'
-        )
-        assert response.status_code == 200
-
-        # Now, delete the tenant we just created
-        headers = {
-            "X-Tapis-Token": conf.test_jwt,
-            "X-Tapis-Tenant": "admin",
-            "X-Tapis-User": "tenants",
-        }
-        response = client.delete(
-            "http://localhost:5000/v3/tenants/lolidk",
-            headers=headers,
-            content_type='application/json'
-        )
         assert response.status_code == 200
 
 
