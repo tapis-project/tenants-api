@@ -7,10 +7,6 @@
       "description": "URL to postgres db, including port and database.",
       "default": "postgres:5432/tenants"
     },
-    "service_tenant_base_url": {
-      "type": "string",
-      "default": "https://admin.develop.tapis.io"
-    },
     "postgres_user": {
       "type": "string",
       "description": "user for the SQL db.",
