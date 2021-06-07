@@ -42,8 +42,10 @@ def authentication():
         raise e
 
 
-# this role is stored in the security kernel
+# these roles are stored in the security kernel --
 ROLE = 'tenant_creator'
+
+UPDATER_ROLE = 'tenant_definition_updater'
 
 # this is the Tapis client that tenants will use for interacting with other services, such as the security kernel.
 # we set a 'dummy' jwt because it is possible the Tokens API is not ready yet, or that the SK is not ready yet (tokens
@@ -87,9 +89,30 @@ def authorization():
     # all other actions require us to check roles with the SK, so we need a valid JWT
     get_tokens_on_tapipy_client()
 
-    # if the request is to update a specific tenant, we make the necessary checks in the controller based on the
-    # tenant_id in the request.
     if request.method == 'PUT':
+        # we first check for the tenant updater role --
+        try:
+            users = t.sk.getUsersWithRole(roleName=UPDATER_ROLE, tenant=g.tenant_id)
+        except Exception as e:
+            msg = f'Got an error calling the SK. Exception: {e}'
+            logger.error(msg)
+            # allow tenants API to make updates
+            if g.username == 'tenants' and g.tenant_id == 'admin':
+                logger.info("this is the tenants API; allowing the request even though role not found.")
+                return True
+            raise common_errors.PermissionsError(
+                msg=f'Could not verify permissions with the Security Kernel; additional info: {e}')
+        logger.debug(f"got users: {users}; checking if {g.username} is in UPDATER_ROLE.")
+        if g.username not in users.names:
+            logger.debug("user did not have UPDATER_ROLE")
+            # allow tenants API to make updates
+            if g.username == 'tenants' and g.tenant_id == 'admin':
+                logger.info("this is the tenants API; allowing the request even though role not found.")
+                return True
+            raise common_errors.PermissionsError(msg='Not authorized to update this tenant.')
+
+        # if the request is to update a specific tenant, we make the necessary checks in the controller based on the
+        # tenant_id in the request.
         return True
 
     # otherwise, this is a request to create a tenant.
@@ -143,7 +166,7 @@ def check_authz_tenant_update(tenant_id):
     """
     # get the config for the tenant being updated, and in particular, get the owning site.
     logger.debug(f"top of check_authz_tenant_update for: {tenant_id}")
-    request_tenant = t.tenants.get_tenant_config(tenant_id=tenant_id)
+    request_tenant = t.tenant_cache.get_tenant_config(tenant_id=tenant_id)
     site_id_for_request = request_tenant.site_id
     logger.debug(f"request_tenant: {request_tenant}; site_id_for_request: {site_id_for_request}")
     # if the tenant_id of the access token matched the tenant_id the request is trying to update, the request is
@@ -162,7 +185,7 @@ def check_authz_tenant_update(tenant_id):
     # if the token tenant_id did not match the tenant_id in the request, the only way the request will be authorized is
     # if the token tenant_id is for the admin tenant of the owning site
     # to check this, get the site associated with the token:
-    token_tenant = t.tenants.get_tenant_config(tenant_id=g.tenant_id)
+    token_tenant = t.tenant_cache.get_tenant_config(tenant_id=g.tenant_id)
     site_id_for_token = token_tenant.site_id
     logger.debug(f"site_id_for_token: {site_id_for_token}")
     if site_id_for_request == site_id_for_token:
