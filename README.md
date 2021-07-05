@@ -38,7 +38,29 @@ Once the First Time Setup has been done a machine, updates can be fetched applie
 directory).migrations
 4. `docker-compose up -d tenants` - start a new version of the Tenats API.
 
+
+#### Updates to the Existing Schema
+
+0. First, start up the tenants API stack (including postgres database) as is, before making any changes. 
+1. Make changes to the models.py file to reflect the updates you want to make.
+2. Rebuild the containers (``make build``), specifically need the migrations container to be rebuilt.
+3. Exec into a new migrations container:
+   docker run -it --entrypoint=bash --network=tenants-api_tenants tapis/tenants-api-migrations
+4. Once inside the container:
+  $ flask db migrate
+  $ flask db upgrade   
+Note that the migrate step should create a new migration Python source file in /home/tapis/migrations/versions/
+Note also that the upgrade step (that applies the generated file) could fail if, for example, your changes include a new,
+   non-nullable field. For such changes, you will need to make custom changes to the migration Python source file. 
+6. Back outside of the container, copy the migration file to the migrations directory within this 
+7. Be sure to update the migrations Python source file, as needed. There are good references on the web for how to do
+this; see, for example, https://medium.com/the-andela-way/alembic-how-to-add-a-non-nullable-field-to-a-populated-table-998554003134
+   
+
 #### New DB Schema
+
+*** DEPRECATED -- should use Updates to the Existing Schema from now on.***
+
 During initial development, the database schema can be in flux. Changes to the models require new migrations. Instead of
 adding additional migration versions, the database and associated `migrations` directory can be "wiped" and recreated
 from the new models code using the following steps:
@@ -51,7 +73,7 @@ from the new models code using the following steps:
   # inside the container:
   $ flask db init
   $ flask db migrate
-  $ flask db upgrade
+  $ flask db upgrade  
 6. from back outside the container, copy migrations files back to host:
 
 docker cp $cid:/home/tapis/migrations/script.py.mako migrations/
@@ -88,7 +110,7 @@ for our tenant.
 below, we assume a valid JWT has been exported to the `jwt` variable. For example,
 
 ```
-$ curl -u "tenants:<pass>" -H "Content-type: application/json" -d '{"token_tenant_id": "master", "account_type": "service", "token_username": "tenants", "access_token_ttl": 99999999}'  https://master.develop.tapis.io/v3/tokens
+$ curl -u "tenants:<pass>" -H "Content-type: application/json" -d '{"token_tenant_id": "admin", "account_type": "service", "token_username": "tenants", "access_token_ttl": 99999999}'  https://admin.develop.tapis.io/v3/tokens
 ```
 
 #### Get an Authorized JWT
@@ -255,7 +277,7 @@ Listing and retrieving tenants works just like in the case of owners and LDAP ob
 Here is an example of creating a site.
 
 ```
-curl -H "X-Tapis-Token: $jwt" localhost:5000/v3/sites -H "content-type: application/json" -d '{"site_id":"tacc", "primary": True, "base_url": "https://api.tacc.utexas.edu", "tenant_base_url_template": "https://api.tacc.utexas.edu", "site_master_tenant_id": "dev", "services": ["tokens", "tenants"]}'
+curl -H "X-Tapis-Token: $jwt" localhost:5000/v3/sites -H "content-type: application/json" -d '{"site_id":"tacc", "primary": True, "base_url": "https://api.tacc.utexas.edu", "tenant_base_url_template": "https://api.tacc.utexas.edu", "site_admin_tenant_id": "dev", "services": ["tokens", "tenants"]}'
 
 {
   "message":"Site object created successfully.",
@@ -263,7 +285,7 @@ curl -H "X-Tapis-Token: $jwt" localhost:5000/v3/sites -H "content-type: applicat
     "base_url":"https://api.tacc.utexas.edu",
     "primary":true,"services":["tokens","tenants"],
     "site_id":"tacc",
-    "site_master_tenant_id":"dev",
+    "site_admin_tenant_id":"dev",
     "tenant_base_url_template":"https://api.tacc.utexas.edu"},
     "status":"success",
     "version":"dev"

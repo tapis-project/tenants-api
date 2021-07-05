@@ -1,11 +1,13 @@
+import os
+
 from common.config import conf
 from common.utils import TapisApi, handle_error, flask_errors_dict
 from common.resources import HelloResource, ReadyResource
 from flask_migrate import Migrate
-from service import app
+from service import app, MIGRATIONS_RUNNING
 from service.auth import authn_and_authz
 from service.controllers import LDAPsResource, LDAPResource, OwnersResource, OwnerResource, TenantsResource, \
-    TenantResource, SitesResource, SiteResource
+    TenantResource, TenantHistoryResource, SitesResource, SiteResource
 
 # authentication and authorization ---
 @app.before_request
@@ -39,16 +41,18 @@ api.add_resource(OwnerResource, '/v3/tenants/owners/<email>')
 
 api.add_resource(TenantsResource, '/v3/tenants')
 api.add_resource(TenantResource, '/v3/tenants/<tenant_id>')
+api.add_resource(TenantHistoryResource, '/v3/tenants/<tenant_id>/history')
 
 # make sure the dev tenant is in place
-from service.models import ensure_master_tenant_present, ensure_dev_tenant_present
+from service.models import ensure_admin_tenant_present, ensure_dev_tenant_present
 
-# the dev tenant requires the presence of the master tenant.
-if conf.ensure_dev_tenant:
-    ensure_master_tenant_present()
-    ensure_dev_tenant_present()
-elif conf.ensure_master_tenant:
-    ensure_master_tenant_present()
+# the dev tenant requires the presence of the admin tenant.
+if not MIGRATIONS_RUNNING:
+    if conf.ensure_dev_tenant:
+        ensure_admin_tenant_present()
+        ensure_dev_tenant_present()
+    elif conf.ensure_admin_tenant:
+        ensure_admin_tenant_present()
 
 
 # start the development server
