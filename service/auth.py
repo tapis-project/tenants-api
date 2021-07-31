@@ -91,6 +91,9 @@ def authorization():
 
     if request.method == 'PUT':
         # we first check for the tenant updater role --
+        # note that g.tenant_id is the tenant_id claim of the X-Tapis-Token; i.e., it is the tenant that the
+        # caller is in. Note that this could be a different tenant from the tenant the request is trying to
+        # update; we will check that later.
         try:
             users = t.sk.getUsersWithRole(roleName=UPDATER_ROLE, tenant=g.tenant_id)
         except Exception as e:
@@ -160,12 +163,17 @@ def get_tokens_on_tapipy_client():
 
 def check_authz_tenant_update(tenant_id):
     """
-    Checks that one of the following are true on tenant update:
+    Called from the PUT controller and checks that one of the following are true on tenant update:
       1). the JWT's tenant_id claim matches the tenant_id being updated. OR
       2). the JWT's tenant_id claim is for the admin tenant for the site owning the tenant_id being updated.
     """
     # get the config for the tenant being updated, and in particular, get the owning site.
     logger.debug(f"top of check_authz_tenant_update for: {tenant_id}")
+    # first we check if this is the tenants service at the primary site -- they are always allowed to make changes:
+    if g.username == 'tenants' and g.tenant_id == 'admin':
+        logger.info("this is the tenants API; allowing the request and not checking site and tenant details...")
+        return True
+
     request_tenant = t.tenant_cache.get_tenant_config(tenant_id=tenant_id)
     site_id_for_request = request_tenant.site_id
     logger.debug(f"request_tenant: {request_tenant}; site_id_for_request: {site_id_for_request}")
@@ -207,12 +215,12 @@ def create_tenant_role():
     :return: None
     """
     try:
-        t.sk.createRole(roleName=ROLE,  description='Role controlling ability to create tenants.')
+        t.sk.createRole(roleName=ROLE, roleTenant='admin', description='Role controlling ability to create tenants.')
     except Exception as e:
         err = e
 
 
-def grant_tenant_role(username):
+def grant_tenant_role(username, tenant_id):
     """
     Grant the tenant_creator role to username in tenant_id.
     :param tenant_id: 
@@ -220,5 +228,5 @@ def grant_tenant_role(username):
     :return: 
     """
     # TODO -- needs to be tested...
-    t.sk.grantRole(user=username, role=ROLE)
+    t.sk.grantRole(userName=username, role=ROLE, tenant=tenant_id)
 
