@@ -25,7 +25,7 @@ def check_if_primary(data):
                         primary=data.primary,
                         base_url=data.base_url,
                         tenant_base_url_template=data.tenant_base_url_template,
-                        site_master_tenant_id=data.site_master_tenant_id,
+                        site_admin_tenant_id=data.site_admintenant_id,
                         services=data.services)
     elif data.primary and data.base_url is None:
         logger.debug('checking if primary but no base url provided')
@@ -35,5 +35,5 @@ def check_if_primary(data):
         site = Site(site_id=data.site_id,
                     primary=False,
                     tenant_base_url_template=data.tenant_base_url_template,
-                    site_master_tenant_id=data.site_master_tenant_id,
+                    site_admin_tenant_id=data.site_admin_tenant_id,
                     services=data.services)
