@@ -182,7 +182,7 @@ def ensure_primary_site_present():
                          base_url=base_url,
                          tenant_base_url_template=tenant_base_url_template,
                          site_admin_tenant_id='admin',
-                         services=['systems', 'files', 'security', 'tokens', 'streams', 'authenticator', 'meta', 'actors'])
+                         services=['systems', 'apps', 'files', 'jobs', 'security', 'tokens', 'streams', 'authenticator', 'meta', 'actors', 'pgrest'])
 
     except Exception as e:
         logger.error(f'Got exception trying to add the primary site. e: {e}')
@@ -228,7 +228,7 @@ def ensure_admin_tenant_present():
                    service_ldap_connection_id=None,
                    user_ldap_connection_id=None,
                    description='The admin tenant.',
-                   status='inactive',
+                   status='active',
                    public_key=public_key)
     except Exception as e:
         logger.error(f'Got exception trying to add the admin tenant. e: {e}')
@@ -279,7 +279,7 @@ def ensure_dev_tenant_present():
                    service_ldap_connection_id=None,
                    user_ldap_connection_id='tapis-dev',
                    description='The dev tenant.',
-                   status='inactive',
+                   status='active',
                    public_key=public_key)
     except Exception as e:
         logger.error(f'Got exception trying to add the dev tenant. e: {e}')
