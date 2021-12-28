@@ -8,11 +8,12 @@ from openapi_core.wrappers.flask import FlaskOpenAPIRequest
 import sqlalchemy
 from service import db
 from service.auth import check_authz_tenant_update
-from common import utils, errors
+from tapisservice import errors
+from tapisservice.tapisflask import utils 
 from service.models import LDAPConnection, TenantOwner, Tenant, TenantHistory, Site
 
 # get the logger instance -
-from common.logs import get_logger
+from tapisservice.logs import get_logger
 logger = get_logger(__name__)
 
 

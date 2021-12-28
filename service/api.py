@@ -1,8 +1,8 @@
 import os
 
-from common.config import conf
-from common.utils import TapisApi, handle_error, flask_errors_dict
-from common.resources import HelloResource, ReadyResource
+from tapisservice.config import conf
+from tapisservice.tapisflask.utils import TapisApi, handle_error, flask_errors_dict
+from tapisservice.tapisflask.resources import HelloResource, ReadyResource
 from flask_migrate import Migrate
 from service import app, MIGRATIONS_RUNNING
 from service.auth import authn_and_authz

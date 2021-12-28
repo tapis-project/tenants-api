@@ -4,7 +4,7 @@ import json
 
 from service import models
 from service.api import app
-from common.config import conf
+from tapisservice.config import conf
 
 
 @pytest.fixture(scope='module')

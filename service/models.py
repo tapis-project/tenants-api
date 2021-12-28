@@ -4,13 +4,16 @@ import json
 from flask import g, Flask
 from sqlalchemy.types import ARRAY
 
-from common.config import conf
+from tapisservice.config import conf
 from service import db, MIGRATIONS_RUNNING
 # get the logger instance -
-from common.logs import get_logger
+from tapisservice.logs import get_logger
 logger = get_logger(__name__)
 
-public_key = "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAz7rr5CsFM7rHMFs7uKIdcczn0uL4ebRMvH8pihrg1tW/fp5Q+5ktltoBTfIaVDrXGF4DiCuzLsuvTG5fGElKEPPcpNqaCzD8Y1v9r3tfkoPT3Bd5KbF9f6eIwrGERMTs1kv7665pliwehz91nAB9DMqqSyjyKY3tpSIaPKzJKUMsKJjPi9QAS167ylEBlr5PECG4slWLDAtSizoiA3fZ7fpngfNr4H6b2iQwRtPEV/EnSg1N3Oj1x8ktJPwbReKprHGiEDlqdyT6j58l/I+9ihR6ettkMVCq7Ho/bsIrwm5gP0PjJRvaD5Flsze7P4gQT37D1c5nbLR+K6/T0QTiyQIDAQAB\n-----END PUBLIC KEY-----"
+# default public key to use when creating the admin and dev tenants. this key is only used
+# if the conf.admin_tenant_public_key and conf.dev_tenant_public_key are not set.
+default_public_key = "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAz7rr5CsFM7rHMFs7uKIdcczn0uL4ebRMvH8pihrg1tW/fp5Q+5ktltoBTfIaVDrXGF4DiCuzLsuvTG5fGElKEPPcpNqaCzD8Y1v9r3tfkoPT3Bd5KbF9f6eIwrGERMTs1kv7665pliwehz91nAB9DMqqSyjyKY3tpSIaPKzJKUMsKJjPi9QAS167ylEBlr5PECG4slWLDAtSizoiA3fZ7fpngfNr4H6b2iQwRtPEV/EnSg1N3Oj1x8ktJPwbReKprHGiEDlqdyT6j58l/I+9ihR6ettkMVCq7Ho/bsIrwm5gP0PjJRvaD5Flsze7P4gQT37D1c5nbLR+K6/T0QTiyQIDAQAB\n-----END PUBLIC KEY-----"
+
 
 class Site(db.Model):
     __tablename__ = 'site'
@@ -213,6 +216,9 @@ def ensure_admin_tenant_present():
     # use the base URL configured for this Tenants API service.
     base_url = conf.primary_site_admin_tenant_base_url
     site_id = 'tacc'
+    public_key = conf.admin_tenant_public_key
+    if not public_key:
+        public_key = default_public_key
     try:
         # the admin tenant
         add_tenant(tenant_id='admin',
@@ -265,6 +271,9 @@ def ensure_dev_tenant_present():
         # we swallow this exception and try to add the tenant since it is possible the ldap was present but not the
         # tenant.
         db.session.rollback()
+    public_key = conf.dev_tenant_public_key
+    if not public_key:
+        public_key = default_public_key
     try:
         # the dev tenant
         add_tenant(tenant_id='dev',
