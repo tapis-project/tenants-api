@@ -1,13 +1,16 @@
 from flask import g, request
 
-from common import auth
-from common.config import conf
-from common import errors as common_errors
+from tapisservice import auth
+from tapisservice.tapisflask import auth as flaskauth
+
+from tapisservice.config import conf
+from tapisservice.tenants import tenant_cache
+from tapisservice import errors as common_errors
 
 from service.models import get_sites, get_tenants
 
 # get the logger instance -
-from common.logs import get_logger
+from tapisservice.logs import get_logger
 logger = get_logger(__name__)
 
 
@@ -30,7 +33,7 @@ def authentication():
     # thread-local. If it fails due to a missing token, we then check if there is a p
     logger.debug("top of authentication()")
     try:
-        auth.authentication()
+        flaskauth.authentication()
     except common_errors.NoTokenError as e:
         logger.debug(f"Caught NoTokenError: {e}")
         g.no_token = True
@@ -65,7 +68,7 @@ for s in sites:
         primary_site_admin_tenant_id = s.get('site_admin_tenant_id')
         logger.debug(f"found prinary site; site_id: {s.get('site_id')}; admin tenant_id: {primary_site_admin_tenant_id}")
 if primary_site_admin_tenant_id:
-    t = auth.get_service_tapis_client(tenant_id=primary_site_admin_tenant_id, jwt='dummy', tenants=auth.tenants)
+    t = auth.get_service_tapis_client(tenant_id=primary_site_admin_tenant_id, jwt='dummy', tenants=tenant_cache)
 else:
     t = None
     logger.info(f'Could not find tenant_id for the primary site and was therefore not able to generate the tapis client.'
@@ -151,11 +154,14 @@ def get_tokens_on_tapipy_client():
     # need to generate tokens.
     if t.jwt == 'dummy':
         # try to replace with a real token:
+        t.jwt = None
         try:
             t.get_tokens()
             logger.info("tenants-api has just called get_tokens().")
         except Exception as e:
             logger.info(f"Tenants could not retrieve a service token from the Tokens API; exception: {e}")
+            logger.info(f"attrs on g: {dir(g)}")
+            t.jwt = None
             raise common_errors.PermissionsError(msg=f'Could not retrieve service token from  the Tokens API. '
                                                      f'Tapis may still be initializing? Try request later.')
     # check to make sure the user has the necessary role. -the tenant to check in is based on the tenant being

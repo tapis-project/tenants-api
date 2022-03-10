@@ -1,11 +1,11 @@
 import os
-from common.config import conf
+from tapisservice.config import conf
 from flask import Flask
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 
 # get the logger instance -
-from common.logs import get_logger
+from tapisservice.logs import get_logger
 logger = get_logger(__name__)
 
 MIGRATIONS_RUNNING = os.environ.get('MIGRATIONS_RUNNING', False)

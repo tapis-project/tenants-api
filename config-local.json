@@ -1,6 +1,9 @@
 {
   "service_name": "tenants",
-  "service_password": "7P706qzmZ9BygUGiqOJ7lXA",
+  "service_password": "<get from stache>",
+  "primary_site_admin_tenant_base_url": "https://admin.develop.tapis.io",
+  "service_site_id": "tacc",
+  "service_tenant_id": "admin",
   "tenants": ["*"],
   "use_sk": false,
   "log_level": "DEBUG",

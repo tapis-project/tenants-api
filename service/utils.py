@@ -1,16 +1,8 @@
-import datetime
-from flask import request
-from flask_restful import Resource
-from openapi_core.shortcuts import RequestValidator
-from openapi_core.wrappers.flask import FlaskOpenAPIRequest
-# import psycopg2
-import sqlalchemy
-from service import db
-from common import utils, errors
-from service.models import LDAPConnection, TenantOwner, Tenant, Site
+from tapisservice import errors
+from service.models import Site
 
 # get the logger instance -
-from common.logs import get_logger
+from tapisservice.logs import get_logger
 logger = get_logger(__name__)
 
 

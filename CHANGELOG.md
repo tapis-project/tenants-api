@@ -1,6 +1,22 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 1.1.0 - 2022-03-01
+This release converts the Tenats API to using the new `tapipy-tapisservice` plugin-based 
+Tapis Python SDK and makes updates necessary for supporting deployment automation provided
+by the Tapis Deployer project.
+
+### Breaking Changes:
+- None.
+
+### New features:
+- Convert Tenants API to using the new `tapis/flaskbase-plugins` image.
+- Support the initial version of the Tapis Deployer deployment automation. 
+
+### Bug fixes:
+- None.
+
+
 ## 1.0.0 - 2021-07-31
 Initial production release of the Tapis Tenants API with support for managing the sites
 and tenants within a distributed Tapis installation.
@@ -13,7 +29,7 @@ Live-docs: https://tapis-project.github.io/live-docs/
 - Initial release.
 
 ### New features:
- - Initial release.
+- Initial release.
 
 ### Bug fixes:
 - None.
