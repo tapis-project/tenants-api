@@ -154,11 +154,14 @@ def get_tokens_on_tapipy_client():
     # need to generate tokens.
     if t.jwt == 'dummy':
         # try to replace with a real token:
+        t.jwt = None
         try:
             t.get_tokens()
             logger.info("tenants-api has just called get_tokens().")
         except Exception as e:
             logger.info(f"Tenants could not retrieve a service token from the Tokens API; exception: {e}")
+            logger.info(f"attrs on g: {dir(g)}")
+            t.jwt = None
             raise common_errors.PermissionsError(msg=f'Could not retrieve service token from  the Tokens API. '
                                                      f'Tapis may still be initializing? Try request later.')
     # check to make sure the user has the necessary role. -the tenant to check in is based on the tenant being
