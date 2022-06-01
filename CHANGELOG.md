@@ -1,6 +1,19 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 1.2.0 - 2022-05-30
+There were no major updates in this release.
+
+### Breaking Changes:
+- None.
+
+### New features:
+- None.
+
+### Bug fixes:
+- None.
+
+
 ## 1.1.0 - 2022-03-01
 This release converts the Tenats API to using the new `tapipy-tapisservice` plugin-based 
 Tapis Python SDK and makes updates necessary for supporting deployment automation provided
