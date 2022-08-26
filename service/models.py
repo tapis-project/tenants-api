@@ -181,7 +181,8 @@ def ensure_primary_site_present():
     logger.info(f"adding primary site with base_url: {base_url} and "
                 f"tenant_base_url_template: {tenant_base_url_template}")
     try:
-        add_primary_site(site_id='tacc',
+        # the tenant's service_site_id should always be the primary site id.
+        add_primary_site(site_id=conf.service_site_id,
                          base_url=base_url,
                          tenant_base_url_template=tenant_base_url_template,
                          site_admin_tenant_id='admin',
