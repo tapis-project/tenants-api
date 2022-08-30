@@ -1,6 +1,22 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+
+## 1.2.1 - 2022-05-30
+This release changes Tenants API to use the `service_site_id` when storing the primary site record
+whenever `ensure_primary_site_present` is True.
+
+### Breaking Changes:
+- None.
+
+### New features:
+- None.
+
+### Bug fixes:
+- This release changes Tenants API to use the `service_site_id` when storing the primary site record
+whenever `ensure_primary_site_present` is True. See issue #5 for more details. 
+
+
 ## 1.2.0 - 2022-05-30
 There were no major updates in this release.
 
