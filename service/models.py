@@ -216,7 +216,7 @@ def ensure_admin_tenant_present():
         db.session.rollback()
     # use the base URL configured for this Tenants API service.
     base_url = conf.primary_site_admin_tenant_base_url
-    site_id = 'tacc'
+    site_id = conf.service_site_id
     public_key = conf.admin_tenant_public_key
     if not public_key:
         public_key = default_public_key
@@ -253,6 +253,7 @@ def ensure_dev_tenant_present():
     logger.debug("top of ensure_dev_tenant_present")
     ensure_primary_site_present()
     tenants = get_tenants()
+    site_id = conf.service_site_id
     for tenant in tenants:
         if tenant.get('tenant_id') == 'dev':
             return
@@ -279,7 +280,7 @@ def ensure_dev_tenant_present():
         # the dev tenant
         add_tenant(tenant_id='dev',
                    base_url=base_url,
-                   site_id='tacc',
+                   site_id=site_id,
                    token_service=f'{base_url}/v3/tokens',
                    security_kernel=f'{base_url}/v3/security',
                    authenticator=f'{base_url}/v3/oauth2',
