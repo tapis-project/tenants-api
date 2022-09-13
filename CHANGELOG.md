@@ -1,10 +1,25 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 1.2.2 - 2022-09-313
+This release fixes an issue with the 1.2.1 release where the `service_site_id` was not used to generate the
+`admin` and `dev` tenan records.
 
-## 1.2.1 - 2022-05-30
-This release changes Tenants API to use the `service_site_id` when storing the primary site record
-whenever `ensure_primary_site_present` is True.
+### Breaking Changes:
+- None.
+
+### New features:
+- None.
+
+### Bug fixes:
+- This release corrects the approach used in 1.2.1 to update Tenants API to use the `service_site_id` when storing 
+the primary site record whenever `ensure_primary_site_present` is True. With this update, it also uses the 
+`service_site_id` when storing the `admin` and `dev` tenant records.
+
+
+## 1.2.1 - 2022-08-30
+This release changes Tenants API to use the `service_site_id` when storing the primary site
+record whenever `ensure_primary_site_present` is True.
 
 ### Breaking Changes:
 - None.
