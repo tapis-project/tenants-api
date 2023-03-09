@@ -1,6 +1,22 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 1.3.0 - 2023-03-12
+This small release collects two bug fixes that were previously released as patch versions to 1.2.x.
+
+### Breaking Changes:
+- None.
+
+### New features:
+- None.
+
+### Bug fixes:
+- Change Tenants API to use the `service_site_id` when storing the primary site record
+whenever `ensure_primary_site_present` is True. See issue #5 for more details. (originally released in 1.2.1)
+- Additionally, use `service_site_id` when storing the `admin` and `dev` tenant records. (originally released
+in 1.2.2)
+
+
 ## 1.2.2 - 2022-09-313
 This release fixes an issue with the 1.2.1 release where the `service_site_id` was not used to generate the
 `admin` and `dev` tenan records.
