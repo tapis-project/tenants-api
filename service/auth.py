@@ -68,7 +68,7 @@ for s in sites:
         primary_site_admin_tenant_id = s.get('site_admin_tenant_id')
         logger.debug(f"found prinary site; site_id: {s.get('site_id')}; admin tenant_id: {primary_site_admin_tenant_id}")
 if primary_site_admin_tenant_id:
-    t = auth.get_service_tapis_client(tenant_id=primary_site_admin_tenant_id, jwt='dummy', tenants=tenant_cache)
+    t = auth.get_service_tapis_client(tenant_id=primary_site_admin_tenant_id, tenants=tenant_cache)
 else:
     t = None
     logger.info(f'Could not find tenant_id for the primary site and was therefore not able to generate the tapis client.'
