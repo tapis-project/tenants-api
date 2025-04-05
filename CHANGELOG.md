@@ -1,6 +1,19 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 1.8.2 - 2025-04-04
+Small release for CI and to update CHANGELOG.
+
+### Breaking Changes:
+- None.
+
+### New features:
+- None.
+
+### Bug fixes:
+- None.
+
+
 ## 1.3.0 - 2023-03-12
 This small release collects two bug fixes that were previously released as patch versions to 1.2.x.
 
