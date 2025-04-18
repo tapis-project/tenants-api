@@ -2,8 +2,8 @@ import datetime
 import json
 from flask import request, g
 from flask_restful import Resource
-from openapi_core.shortcuts import RequestValidator
-from openapi_core.wrappers.flask import FlaskOpenAPIRequest
+from openapi_core import openapi_request_validator
+from openapi_core.contrib.flask import FlaskOpenAPIRequest
 # import psycopg2
 import sqlalchemy
 from service import db
@@ -26,8 +26,7 @@ class SitesResource(Resource):
 
     def post(self):
         logger.debug("top of POST /sites")
-        validator = RequestValidator(utils.spec)
-        result = validator.validate(FlaskOpenAPIRequest(request))
+        result = openapi_request_validator.validate(utils.spec, FlaskOpenAPIRequest(request))
         logger.debug(f"just got result {result.parameters}")
         if result.errors:
             logger.debug(f"error in results!!!!!!!!")
@@ -122,8 +121,7 @@ class LDAPsResource(Resource):
 
     def post(self):
         logger.debug("top of POST /ldaps")
-        validator = RequestValidator(utils.spec)
-        result = validator.validate(FlaskOpenAPIRequest(request))
+        result = openapi_request_validator.validate(utils.spec, FlaskOpenAPIRequest(request))
         if result.errors:
             raise errors.ResourceError(msg=f'Invalid POST data: {result.errors}.')
         validated_params = result.parameters
@@ -196,8 +194,7 @@ class OwnersResource(Resource):
 
     def post(self):
         logger.debug(f"top of POST /owners")
-        validator = RequestValidator(utils.spec)
-        result = validator.validate(FlaskOpenAPIRequest(request))
+        result = openapi_request_validator.validate(utils.spec, FlaskOpenAPIRequest(request))
         if result.errors:
             raise errors.ResourceError(msg=f'Invalid POST data: {result.errors}.')
         validated_params = result.parameters
@@ -296,8 +293,7 @@ class TenantsResource(Resource):
 
     def post(self):
         logger.debug(f"top of POST /tenants")
-        validator = RequestValidator(utils.spec)
-        result = validator.validate(FlaskOpenAPIRequest(request))
+        result = openapi_request_validator.validate(utils.spec, FlaskOpenAPIRequest(request))
         if result.errors:
             logger.debug(f"openapi_core validation failed. errors: {result.errors}")
             raise errors.ResourceError(msg=f'Invalid POST data: {result.errors}.')
@@ -401,8 +397,7 @@ class TenantResource(Resource):
             raise errors.ResourceError(msg=f'No tenant found with tenant_id {tenant_id}.')
         # additional authorization checks on update based on the tenant_id of the request:
         check_authz_tenant_update(tenant_id)
-        validator = RequestValidator(utils.spec)
-        result = validator.validate(FlaskOpenAPIRequest(request))
+        result = openapi_request_validator.validate(utils.spec, FlaskOpenAPIRequest(request))
         if result.errors:
             logger.debug(f"openapi_core validation failed. errors: {result.errors}")
             raise errors.ResourceError(msg=f'Invalid PUT data: {result.errors}.')

@@ -1,5 +1,5 @@
 # image: tapis/tenants-api
-from tapis/flaskbase-plugins
+FROM tapis/flaskbase
 
 ADD requirements.txt /home/tapis/requirements.txt
 RUN pip install -r /home/tapis/requirements.txt

@@ -7,6 +7,7 @@
 
 
 # it is required that the operator export API_NAME=<name_of_the_api> before using this makefile/
+API_NAME ?=tenants
 api=${API_NAME}
 
 cwd=$(shell pwd)
