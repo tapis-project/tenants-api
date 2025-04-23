@@ -1,6 +1,19 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 1.8.1 - 2025-04-20
+Small release for OIDC tapisservice update
+
+### Breaking Changes:
+- None.
+
+### New features:
+- None.
+
+### Bug fixes:
+- Update tapisservice.
+
+
 ## 1.8.2 - 2025-04-04
 Small release for CI and to update CHANGELOG.
 
