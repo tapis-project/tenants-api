@@ -1,4 +1,6 @@
 # Tapis Tenants API
+[![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/tapis-project/tenants-api?label=git%20tag)](https://github.com/tapis-project/tenants-api/tags)
+[![Docker Image](https://img.shields.io/docker/v/tapis/tenants-api?label=img&sort=semver)](https://hub.docker.com/r/tapis/tenants-api)
 
 REST API for managing tenants associated with a Tapis instance.
 
