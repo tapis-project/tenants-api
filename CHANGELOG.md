@@ -1,17 +1,29 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
-## 1.8.4 - 2025-04-20
+## 1.9.0 - 2025-07-07
+### Breaking Changes:
+- None.
+
+### New features:
+- None.
+
+### Bug fixes:
+- Update flaskbase to 1.9.0
+
+
+## 1.8.4 - 2025-06-20
 Updated to 1.8.4 flaskbase
 
 ### Breaking Changes:
 - None.
 
 ### New features:
-- Services can set spec_dir and debug_prints via get_service_tapis_client
+- None.
 
 ### Bug fixes:
 - Update tapisservice
+- Added back jwt=dummy on logic for initialization of tenants service
 
 
 ## 1.8.3 - 2025-04-09
