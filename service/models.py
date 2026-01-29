@@ -186,7 +186,7 @@ def ensure_primary_site_present():
                          base_url=base_url,
                          tenant_base_url_template=tenant_base_url_template,
                          site_admin_tenant_id='admin',
-                         services=['systems', 'apps', 'files', 'jobs', 'security', 'tokens', 'streams', 'authenticator', 'meta', 'actors', 'pgrest'])
+                         services=['systems', 'apps', 'files', 'jobs', 'notifications', 'security', 'tokens', 'streams', 'authenticator', 'meta', 'actors', 'pgrest'])
 
     except Exception as e:
         logger.error(f'Got exception trying to add the primary site. e: {e}')
