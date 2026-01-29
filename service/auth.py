@@ -156,7 +156,6 @@ def get_tokens_on_tapipy_client():
     if t.jwt == 'dummy':
         # try to replace with a real token:
         t.jwt = None
-        t.access_token = None
         try:
             t.get_tokens()
             logger.info("tenants-api has just called get_tokens().")
