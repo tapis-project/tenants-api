@@ -1,6 +1,28 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 26Q1
+### Breaking Changes:
+- None.
+
+### New features:
+- Add notifications service to default list of primary site services
+
+### Bug fixes:
+- None.
+
+
+## 25Q4
+### Breaking Changes:
+- None.
+
+### New features:
+- None.
+
+### Bug fixes:
+- Fix for tenants being unable to get access token for itself
+
+
 ## 1.9.0 - 2025-07-07
 ### Breaking Changes:
 - None.
